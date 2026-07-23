@@ -1,0 +1,158 @@
+import * as React from 'react';
+import { useCartStore } from '@/stores/cart.store';
+import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/lib/utils/format';
+import { Trash2, Plus, Minus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+
+interface CartProps {
+  onPay: () => void;
+}
+
+export function Cart({ onPay }: CartProps) {
+  const {
+    items,
+    removeItem,
+    updateQty,
+    getSubtotal,
+    getGrandTotal,
+    clearCart,
+    diskon,
+    setDiskon,
+    catatan,
+    setCatatan,
+  } = useCartStore();
+
+  const handleDiskonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value.replace(/\D/g, ''));
+    setDiskon(val);
+  };
+
+  return (
+    <div className="flex h-full flex-col rounded-xl border bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b p-4 dark:border-slate-800">
+        <h2 className="text-lg font-bold">Pesanan</h2>
+        {items.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearCart}
+            className="text-red-500 hover:text-red-600"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Kosongkan
+          </Button>
+        )}
+      </div>
+
+      {/* Items List */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {items.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center space-y-4 text-center text-slate-500">
+            <div className="rounded-full bg-slate-100 p-6 dark:bg-slate-800">
+              <svg
+                className="h-10 w-10 opacity-50"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+            </div>
+            <div>
+              <p className="font-medium text-slate-900 dark:text-slate-100">Keranjang Kosong</p>
+              <p className="text-sm">Pilih produk di menu untuk ditambahkan</p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {items.map((item) => (
+              <div
+                key={item.product_id}
+                className="flex gap-3 border-b pb-4 last:border-0 dark:border-slate-800"
+              >
+                <div className="flex-1">
+                  <h4 className="font-medium text-slate-900 dark:text-slate-100">{item.nama}</h4>
+                  <div className="text-sm font-semibold text-primary">
+                    {formatCurrency(item.harga)}
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex items-center rounded-md border dark:border-slate-700">
+                    <button
+                      onClick={() => updateQty(item.product_id, item.qty - 1)}
+                      className="flex h-8 w-8 items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <span className="w-8 text-center text-sm font-medium">{item.qty}</span>
+                    <button
+                      onClick={() => updateQty(item.product_id, item.qty + 1)}
+                      className="flex h-8 w-8 items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                    {formatCurrency(item.harga * item.qty)}
+                  </div>
+                  <button
+                    onClick={() => removeItem(item.product_id)}
+                    className="text-xs text-red-500 hover:underline"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Footer / Summary */}
+      <div className="border-t bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+        <div className="space-y-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-500">Subtotal</span>
+            <span className="font-medium text-slate-900 dark:text-slate-100">
+              {formatCurrency(getSubtotal())}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-slate-500">Diskon (Rp)</span>
+            <Input
+              type="text"
+              className="h-8 w-24 text-right"
+              value={diskon > 0 ? formatCurrency(diskon).replace('Rp', '').trim() : ''}
+              onChange={handleDiskonChange}
+              placeholder="0"
+            />
+          </div>
+          <div className="flex justify-between text-lg font-bold">
+            <span className="text-slate-900 dark:text-slate-100">Total</span>
+            <span className="text-primary">{formatCurrency(getGrandTotal())}</span>
+          </div>
+          <Input
+            placeholder="Catatan pesanan..."
+            value={catatan || ''}
+            onChange={(e) => setCatatan(e.target.value)}
+            className="mt-2"
+          />
+          <Button
+            className="mt-4 w-full h-12 text-lg font-bold"
+            disabled={items.length === 0}
+            onClick={onPay}
+          >
+            Bayar Pesanan
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

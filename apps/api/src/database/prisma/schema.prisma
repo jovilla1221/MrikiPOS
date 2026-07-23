@@ -1,0 +1,533 @@
+// ============================================================================
+// MrikiPOS — Prisma Schema
+// Database: PostgreSQL 16
+// Multi-tenant: shared schema, tenant_id per tabel
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum UserRole {
+  OWNER
+  MANAGER
+  KASIR
+  STAFF
+}
+
+enum TenantPlan {
+  FREE
+  UMKM
+  BISNIS
+  KOMUNITAS
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  VOIDED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  QRIS
+  TRANSFER
+  EWALLET
+  MULTI
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+  REFUNDED
+}
+
+enum CreditStatus {
+  UNPAID
+  PAID
+  OVERDUE
+  PARTIAL
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
+}
+
+enum StockType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ApprovalType {
+  REFUND
+  VOID
+  STOCK_TRANSFER
+  SHIFT_CLOSE
+  PRICE_CHANGE
+}
+
+// ============================================================================
+// MODELS
+// ============================================================================
+
+model Tenant {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nama       String       @db.VarChar(100)
+  phone      String       @unique @db.VarChar(15)
+  email      String?      @db.VarChar(100)
+  plan       TenantPlan   @default(FREE)
+  status     TenantStatus @default(ACTIVE)
+  settings   Json         @default("{}")
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
+
+  outlets         Outlet[]
+  users           User[]
+  categories      Category[]
+  products        Product[]
+  transactions    Transaction[]
+  customers       Customer[]
+  customerCredits CustomerCredit[]
+  shifts          Shift[]
+  stockHistory    StockHistory[]
+  suppliers       Supplier[]
+  purchaseOrders  PurchaseOrder[]
+  approvalLogs    ApprovalLog[]
+  auditLogs       AuditLog[]
+  otpCodes        OtpCode[]
+
+  @@map("tenants")
+}
+
+model Outlet {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id  String   @db.Uuid
+  nama       String   @db.VarChar(100)
+  alamat     String?  @db.VarChar(255)
+  kelurahan  String?  @db.VarChar(50)
+  kecamatan  String?  @db.VarChar(50)
+  latitude   Float?
+  longitude  Float?
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  tenant       Tenant        @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  users        User[]
+  categories   Category[]
+  products     Product[]
+  transactions Transaction[]
+  shifts       Shift[]
+  stockHistory StockHistory[]
+  approvalLogs ApprovalLog[]
+
+  @@index([tenant_id])
+  @@map("outlets")
+}
+
+model User {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id  String   @db.Uuid
+  outlet_id  String   @db.Uuid
+  nama       String   @db.VarChar(100)
+  phone      String   @db.VarChar(15)
+  pin_hash   String   @db.VarChar(100)
+  role       UserRole @default(KASIR)
+  is_active  Boolean  @default(true)
+  last_login DateTime?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  tenant            Tenant        @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  outlet            Outlet        @relation(fields: [outlet_id], references: [id])
+  transactions      Transaction[] @relation("TransactionKasir")
+  shifts            Shift[]
+  refreshTokens     RefreshToken[]
+  auditLogs         AuditLog[]
+  approvalRequested ApprovalLog[]  @relation("ApprovalRequester")
+  approvalApproved  ApprovalLog[]  @relation("ApprovalApprover")
+
+  @@unique([tenant_id, phone])
+  @@index([tenant_id, outlet_id])
+  @@map("users")
+}
+
+model Category {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id  String   @db.Uuid
+  outlet_id  String   @db.Uuid
+  nama       String   @db.VarChar(50)
+  parent_id  String?  @db.Uuid
+  sort_order Int      @default(0)
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  tenant   Tenant     @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  outlet   Outlet     @relation(fields: [outlet_id], references: [id])
+  parent   Category?  @relation("CategoryHierarchy", fields: [parent_id], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@index([tenant_id, outlet_id])
+  @@map("categories")
+}
+
+model Product {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String   @db.Uuid
+  outlet_id     String   @db.Uuid
+  category_id   String?  @db.Uuid
+  nama          String   @db.VarChar(100)
+  sku           String?  @db.VarChar(50)
+  barcode       String?  @db.VarChar(50)
+  harga_jual    Decimal  @db.Decimal(12, 2)
+  harga_beli    Decimal? @db.Decimal(12, 2)
+  stok          Int      @default(0)
+  stok_minimum  Int      @default(5)
+  satuan        String?  @db.VarChar(20)
+  foto_url      String?  @db.VarChar(500)
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  tenant           Tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  outlet           Outlet            @relation(fields: [outlet_id], references: [id])
+  category         Category?         @relation(fields: [category_id], references: [id])
+  variants         ProductVariant[]
+  transactionItems TransactionItem[]
+  stockHistory     StockHistory[]
+
+  @@index([tenant_id, outlet_id])
+  @@index([barcode])
+  @@index([tenant_id, category_id])
+  @@map("products")
+}
+
+model ProductVariant {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id  String   @db.Uuid
+  nama        String   @db.VarChar(50)
+  sku         String?  @db.VarChar(50)
+  harga_jual  Decimal  @db.Decimal(12, 2)
+  stok        Int      @default(0)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+
+  product          Product           @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  transactionItems TransactionItem[]
+
+  @@index([product_id])
+  @@map("product_variants")
+}
+
+model Transaction {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String            @db.Uuid
+  outlet_id     String            @db.Uuid
+  shift_id      String?           @db.Uuid
+  kasir_id      String            @db.Uuid
+  customer_id   String?           @db.Uuid
+  nomor         String            @db.VarChar(30)
+  subtotal      Decimal           @db.Decimal(12, 2)
+  diskon        Decimal           @default(0) @db.Decimal(12, 2)
+  pajak         Decimal           @default(0) @db.Decimal(12, 2)
+  grand_total   Decimal           @db.Decimal(12, 2)
+  metode_bayar  PaymentMethod     @default(CASH)
+  status        TransactionStatus @default(PENDING)
+  catatan       String?           @db.VarChar(255)
+  local_id      String?           @db.VarChar(100)
+  created_at    DateTime          @default(now())
+  synced_at     DateTime?
+  updated_at    DateTime          @updatedAt
+
+  tenant   Tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  outlet   Outlet            @relation(fields: [outlet_id], references: [id])
+  shift    Shift?            @relation(fields: [shift_id], references: [id])
+  kasir    User              @relation("TransactionKasir", fields: [kasir_id], references: [id])
+  customer Customer?         @relation(fields: [customer_id], references: [id])
+  items    TransactionItem[]
+  payments Payment[]
+
+  @@index([tenant_id, created_at(sort: Desc)])
+  @@index([tenant_id, outlet_id, created_at])
+  @@index([outlet_id, shift_id])
+  @@index([nomor])
+  @@index([local_id])
+  @@unique([tenant_id, local_id])
+  @@map("transactions")
+}
+
+
+model TransactionItem {
+  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transaction_id  String  @db.Uuid
+  product_id      String  @db.Uuid
+  variant_id      String? @db.Uuid
+  nama_produk     String  @db.VarChar(100)
+  qty             Int
+  harga           Decimal @db.Decimal(12, 2)
+  diskon_item     Decimal @default(0) @db.Decimal(12, 2)
+  subtotal        Decimal @db.Decimal(12, 2)
+  catatan         String? @db.VarChar(255)
+
+  transaction Transaction    @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
+  product     Product        @relation(fields: [product_id], references: [id])
+  variant     ProductVariant? @relation(fields: [variant_id], references: [id])
+
+  @@index([transaction_id])
+  @@map("transaction_items")
+}
+
+model Payment {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transaction_id   String        @db.Uuid
+  metode           PaymentMethod
+  jumlah           Decimal       @db.Decimal(12, 2)
+  status           PaymentStatus @default(PENDING)
+  referensi        String?       @db.VarChar(100)
+  gateway_response Json?
+  expires_at       DateTime?
+  paid_at          DateTime?
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+
+  transaction Transaction @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
+
+  @@index([transaction_id])
+  @@index([referensi])
+  @@map("payments")
+}
+
+model Customer {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String   @db.Uuid
+  outlet_id     String   @db.Uuid
+  nama          String   @db.VarChar(100)
+  phone         String?  @db.VarChar(15)
+  alamat        String?  @db.VarChar(255)
+  total_belanja Decimal  @default(0) @db.Decimal(12, 2)
+  poin          Int      @default(0)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  tenant       Tenant           @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  credits      CustomerCredit[]
+
+  @@index([tenant_id, outlet_id])
+  @@index([tenant_id, phone])
+  @@map("customers")
+}
+
+model CustomerCredit {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id   String       @db.Uuid
+  outlet_id   String       @db.Uuid
+  customer_id String       @db.Uuid
+  jumlah      Decimal      @db.Decimal(12, 2)
+  sisa        Decimal      @db.Decimal(12, 2)
+  keterangan  String?      @db.VarChar(255)
+  jatuh_tempo DateTime?    @db.Date
+  status      CreditStatus @default(UNPAID)
+  paid_at     DateTime?
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customer_id], references: [id])
+
+  @@index([tenant_id, status])
+  @@index([customer_id])
+  @@index([jatuh_tempo])
+  @@map("customer_credits")
+}
+
+model Shift {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String      @db.Uuid
+  outlet_id       String      @db.Uuid
+  user_id         String      @db.Uuid
+  modal_awal      Decimal     @db.Decimal(12, 2)
+  total_penjualan Decimal     @default(0) @db.Decimal(12, 2)
+  total_transaksi Int         @default(0)
+  kas_aktual      Decimal?    @db.Decimal(12, 2)
+  selisih_kas     Decimal?    @db.Decimal(12, 2)
+  catatan         String?     @db.VarChar(255)
+  status          ShiftStatus @default(OPEN)
+  opened_at       DateTime    @default(now())
+  closed_at       DateTime?
+  updated_at      DateTime    @updatedAt
+
+  tenant       Tenant        @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  outlet       Outlet        @relation(fields: [outlet_id], references: [id])
+  user         User          @relation(fields: [user_id], references: [id])
+  transactions Transaction[]
+
+  @@index([tenant_id, outlet_id])
+  @@index([user_id, status])
+  @@map("shifts")
+}
+
+model StockHistory {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id    String    @db.Uuid
+  outlet_id    String    @db.Uuid
+  product_id   String    @db.Uuid
+  tipe         StockType
+  qty          Int
+  stok_sebelum Int
+  stok_sesudah Int
+  keterangan   String?   @db.VarChar(255)
+  reference_id String?   @db.Uuid
+  created_at   DateTime  @default(now())
+
+  tenant  Tenant  @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  outlet  Outlet  @relation(fields: [outlet_id], references: [id])
+  product Product @relation(fields: [product_id], references: [id])
+
+  @@index([product_id, created_at(sort: Desc)])
+  @@index([tenant_id, outlet_id])
+  @@map("stock_history")
+}
+
+model Supplier {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id  String   @db.Uuid
+  nama       String   @db.VarChar(100)
+  phone      String?  @db.VarChar(15)
+  alamat     String?  @db.VarChar(255)
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  tenant         Tenant          @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  purchaseOrders PurchaseOrder[]
+
+  @@index([tenant_id])
+  @@map("suppliers")
+}
+
+model PurchaseOrder {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id   String   @db.Uuid
+  outlet_id   String   @db.Uuid
+  supplier_id String   @db.Uuid
+  nomor       String   @db.VarChar(30)
+  total       Decimal  @db.Decimal(12, 2)
+  status      String   @default("DRAFT") @db.VarChar(20)
+  catatan     String?  @db.VarChar(255)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  supplier Supplier @relation(fields: [supplier_id], references: [id])
+
+  @@index([tenant_id, outlet_id])
+  @@map("purchase_orders")
+}
+
+model ApprovalLog {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id    String         @db.Uuid
+  outlet_id    String?        @db.Uuid
+  type         ApprovalType
+  reference_id String         @db.Uuid
+  requested_by String         @db.Uuid
+  approved_by  String?        @db.Uuid
+  status       ApprovalStatus @default(PENDING)
+  catatan      String?        @db.VarChar(255)
+  metadata     Json?
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
+
+  tenant    Tenant  @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  outlet    Outlet? @relation(fields: [outlet_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  requester User    @relation("ApprovalRequester", fields: [requested_by], references: [id])
+  approver  User?   @relation("ApprovalApprover", fields: [approved_by], references: [id])
+
+  @@index([tenant_id, status])
+  @@index([tenant_id, outlet_id, status])
+  @@map("approval_logs")
+}
+
+model AuditLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id   String   @db.Uuid
+  user_id     String   @db.Uuid
+  action      String   @db.VarChar(50)
+  entity_type String   @db.VarChar(50)
+  entity_id   String?  @db.Uuid
+  old_values  Json?
+  new_values  Json?
+  ip_address  String?  @db.VarChar(45)
+  user_agent  String?  @db.VarChar(255)
+  created_at  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [user_id], references: [id])
+
+  @@index([tenant_id, created_at(sort: Desc)])
+  @@index([tenant_id, entity_type, entity_id])
+  @@map("audit_logs")
+}
+
+model OtpCode {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id  String?  @db.Uuid
+  phone      String   @db.VarChar(15)
+  code_hash  String   @db.VarChar(100)
+  type       String   @db.VarChar(20)
+  attempts   Int      @default(0)
+  verified   Boolean  @default(false)
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  tenant Tenant? @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+
+  @@index([phone, type])
+  @@index([expires_at])
+  @@map("otp_codes")
+}
+
+model RefreshToken {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String    @db.Uuid
+  token_hash String    @db.VarChar(100)
+  expires_at DateTime
+  revoked    Boolean   @default(false)
+  revoked_at DateTime?
+  created_at DateTime  @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([token_hash])
+  @@map("refresh_tokens")
+}

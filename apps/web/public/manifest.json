@@ -1,0 +1,16 @@
+{
+  "name": "MrikiPOS — Kasir Digital UMKM Kota Blitar",
+  "short_name": "MrikiPOS",
+  "description": "Kasir digital berbasis web (PWA) offline-first untuk UMKM Kota Blitar",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/logo-mrikipos.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+# Prettier ignore - docs sprint history yang tidak bisa ditulis (read-only mounts)
+docs/plans/sprint-7/EXECUTION_PLAN.md
+docs/plans/sprint-8/IMPLEMENTATION_PLAN.md
+docs/plans/sprint-8/README.md
+docs/audit/SPRINT7-AUDIT.md
+apps/web/src/app/(dashboard)/approvals/page.tsx
+apps/web/src/app/(dashboard)/audit-logs/page.tsx
+apps/web/src/app/(dashboard)/settings/page.tsx
+apps/web/src/app/(dashboard)/users/page.tsx
+apps/web/src/lib/api/tenant.ts
+apps/api/src/common/config/jwt-config.spec.ts
+apps/api/src/common/config/jwt-config.validator.ts
+apps/api/src/common/rbac/rbac-policy.ts
+apps/api/src/modules/approval/approval.controller.ts
+apps/api/src/modules/approval/approval.dto.ts
+apps/api/src/modules/approval/approval.spec.ts
+apps/api/src/modules/audit/audit.service.ts
+apps/api/src/modules/credit/credit-security.spec.ts
+apps/api/src/modules/report/report-security.spec.ts
+apps/api/src/modules/user/user.controller.ts
+apps/api/src/modules/user/user.service.ts
+
+
