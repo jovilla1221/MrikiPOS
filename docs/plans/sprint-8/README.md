@@ -2,10 +2,15 @@
 
 Sprint 8 berfokus pada testing, performance optimization, dan security audit sebelum staging pada Sprint 9.
 
+**Status akhir:** SELESAI dan ditutup pada 2026-07-23. Sprint 9 belum dimulai dan menunggu
+konfirmasi eksplisit owner.
+
 | File | Isi |
-|---|---|
+| --- | --- |
 | [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) | Scope, urutan task, acceptance criteria, quality gate, dan risiko |
 | [TODO.md](./TODO.md) | Checklist singkat untuk eksekusi harian |
+| [SPRINT8-AUDIT.md](../../audit/SPRINT8-AUDIT.md) | Hasil quality gate, security closure, waiver, dan keputusan penutupan |
+| [SPRINT8-PERFORMANCE.md](../../audit/SPRINT8-PERFORMANCE.md) | Baseline dan hasil performance final |
 
 ## Urutan kerja
 

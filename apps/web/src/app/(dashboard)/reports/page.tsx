@@ -14,8 +14,10 @@ const SalesChart = dynamic(
   () => import('./_components/sales-chart').then((mod) => mod.SalesChart),
   {
     ssr: false,
-    loading: () => <div className="h-[300px] bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse" />,
-  }
+    loading: () => (
+      <div className="h-[300px] bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse" />
+    ),
+  },
 );
 import { ProfitLossCard } from './_components/profit-loss-card';
 import { TopProductsTable } from './_components/top-products-table';

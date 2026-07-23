@@ -51,3 +51,11 @@ body {
   font-family: var(--font-sans, system-ui, sans-serif);
   min-height: 100vh;
 }
+
+input, select, textarea {
+  color: var(--foreground) !important;
+}
+
+.dark input, .dark select, .dark textarea {
+  color: #ffffff !important;
+}

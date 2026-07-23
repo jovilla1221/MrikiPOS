@@ -1,163 +1,113 @@
-# Sprint 8 — Performance Baseline & Budget
+# Sprint 8 — Performance Baseline & Final
 
-**Dibuat:** 2026-07-23  
-**Tujuan:** Merekam kondisi awal sebelum optimasi; semua angka optimasi harus diukur terhadap baseline ini.
+**Dibuat:** 2026-07-23
 
----
+**Ditutup:** 2026-07-23
 
-## 1. Definisi Performance Budget
-
-| Metrik                             | Budget      | Keterangan                     |
-| ---------------------------------- | ----------- | ------------------------------ |
-| Initial JS per route kritis        | ≤ 200 kB    | gzip, termasuk shared chunk    |
-| LCP (Largest Contentful Paint)     | ≤ 2,5 detik | Simulated mobile throttle 4G   |
-| INP (Interaction to Next Paint)    | ≤ 200 ms    | Klik tombol, submit form       |
-| CLS (Cumulative Layout Shift)      | ≤ 0,1       | Layout stabil saat load        |
-| API response report/export         | ≤ 2.000 ms  | p95, dataset ≤ 1.000 transaksi |
-| API response report/export (besar) | ≤ 5.000 ms  | p95, dataset 31 hari penuh     |
+**Tujuan:** Membandingkan baseline Sprint 8 dengan hasil quality gate final.
 
 ---
 
-## 2. API Test Suite Baseline
+## 1. Performance Budget
 
-**Diukur:** 2026-07-23, `apps/api/node_modules/.bin/jest --passWithNoTests`
-
-| Metrik      | Nilai                  |
-| ----------- | ---------------------- |
-| Test Suites | 18 passed / 18 total   |
-| Tests       | 133 passed / 133 total |
-| Waktu total | 11,637 detik           |
-| Flaky tests | 0                      |
-
-### Test suite yang ada:
-
-- `auth/auth-logout.spec.ts` — token revocation per jti
-- `auth/otp-race.spec.ts` — OTP race condition
-- `auth/otp-crypto.spec.ts` — OTP crypto validation
-- `auth/otp-dto-validation.spec.ts` — DTO validation
-- `auth/web-auth-cookie.spec.ts` — web auth cookie
-- `approval/approval.spec.ts` — approval core & state machine
-- `approval/sensitive-actions.spec.ts` — sensitive action guards
-- `audit/audit.spec.ts` — audit service
-- `common/config/jwt-config.spec.ts` — JWT config validation
-- `common/rbac/rbac-metadata.spec.ts` — RBAC metadata
-- `credit/credit-security.spec.ts` — credit security
-- `report/report-security.spec.ts` — report security
-- `transaction/transaction.module.spec.ts` — module setup
-- `transaction/transaction.rbac.spec.ts` — RBAC
-- `transaction/tx-discount-invariant.spec.ts` — diskon invariant
-- `transaction/tx-outlet-scope.spec.ts` — outlet scope isolation
-- `transaction/tx-stock-race.spec.ts` — race condition stok
-- `user/user.spec.ts` — user service
+| Metrik                                      | Budget         |
+| ------------------------------------------- | -------------- |
+| Initial JS per route kritis                 | ≤ 200 kB       |
+| LCP                                         | ≤ 2,5 detik    |
+| INP                                         | ≤ 200 ms       |
+| CLS                                         | ≤ 0,1          |
+| API report/export dataset ≤ 1.000 transaksi | p95 ≤ 2.000 ms |
+| API report/export 31 hari penuh             | p95 ≤ 5.000 ms |
 
 ---
 
-## 3. TypeScript Typecheck Baseline
+## 2. Test dan Build
 
-**Diukur:** 2026-07-23, `tsc --noEmit --incremental false`
-
-| Package    | Status                              |
-| ---------- | ----------------------------------- |
-| `apps/api` | ✅ Lulus — 0 error                  |
-| `apps/web` | ⏳ Belum diukur (butuh env Next.js) |
-
----
-
-## 4. Frontend Bundle Baseline
-
-> **Catatan:** Build dilakukan secara manual. Angka diperoleh dari `next build` output dan Chrome DevTools.
-
-**Diukur:** 2026-07-23, `apps/web/node_modules/.bin/next build` (estimasi awal)
-
-| Route           | Initial JS (before) | Status vs Budget   | Prioritas |
-| --------------- | ------------------- | ------------------ | --------- |
-| `/login`        | ~90 kB              | ✅ Di bawah budget | Low       |
-| `/pos`          | ~180 kB             | ✅ Di bawah budget | Medium    |
-| `/dashboard`    | ~210 kB             | ⚠️ Di atas budget  | High      |
-| `/reports`      | ~257 kB             | ❌ Melebihi budget | High      |
-| `/transactions` | ~150 kB             | ✅ Di bawah budget | Low       |
-
-> Angka di atas adalah estimasi berdasarkan informasi di implementation plan (257 kB untuk `/reports`).
-> **TODO:** Ganti dengan angka aktual dari `next build` setelah environment tersedia.
+| Metrik              |     Baseline |     Hasil akhir |
+| ------------------- | -----------: | --------------: |
+| Unit test suite     |           18 |              22 |
+| Unit test           |          133 |             148 |
+| E2E suite           |      0 aktif |               4 |
+| E2E test            |      0 aktif |              17 |
+| Flaky test teramati |            0 |               0 |
+| Typecheck API       |        Lulus |           Lulus |
+| Typecheck Web       | Belum diukur |           Lulus |
+| Production build    |      Parsial | API + Web lulus |
 
 ---
 
-## 5. API Endpoint Performance Baseline
+## 3. Frontend Bundle
 
-> **Catatan:** Angka ini perlu diukur dengan sampel data di lingkungan dev.
+Baseline awal sebagian berupa estimasi dari implementation plan. Hasil akhir berasal dari output
+`next build` pada Next.js 15.5.21 di VPS produksi.
 
-| Endpoint                             | Metode | Dataset         | Waktu Response (estimasi) |
-| ------------------------------------ | ------ | --------------- | ------------------------- |
-| `GET /v1/reports/sales`              | GET    | 1.000 transaksi | ~500 ms                   |
-| `GET /v1/reports/profit-loss`        | GET    | 1.000 transaksi | ~600 ms                   |
-| `GET /v1/reports/export?format=csv`  | GET    | 1.000 transaksi | ~800 ms                   |
-| `GET /v1/reports/export?format=xlsx` | GET    | 1.000 transaksi | ~1.200 ms                 |
+| Route           | Baseline | Final First Load JS | Budget | Status |
+| --------------- | -------: | ------------------: | -----: | ------ |
+| `/login`        |   ~90 kB |              151 kB | 200 kB | ✅     |
+| `/pos`          |  ~180 kB |              170 kB | 200 kB | ✅     |
+| `/dashboard`    |  ~210 kB |              160 kB | 200 kB | ✅     |
+| `/reports`      |   257 kB |              158 kB | 200 kB | ✅     |
+| `/transactions` |  ~150 kB |              164 kB | 200 kB | ✅     |
 
-**Temuan dari code review:**
+Shared initial JS final: **103 kB**.
 
-- `getSales()`: full scan transaksi per periode, group di-memory — aman untuk ≤ 10.000 transaksi/bulan
-- `getProfitLoss()`: full scan `transactionItem` dengan join produk — potensial N+1 untuk dataset besar
-- `getTopProducts()`: menggunakan Prisma `groupBy` — efisien, delegasi agregasi ke database
-- `getCashierSummary()`: menggunakan Prisma `groupBy` — efisien
-
----
-
-## 6. Throttle & Rate Limit Baseline
-
-| Endpoint                 | Throttle Saat Ini                  | Target Sprint 8   |
-| ------------------------ | ---------------------------------- | ----------------- |
-| Global                   | 100 req/60 detik (ThrottlerModule) | Tetap             |
-| `GET /v1/reports/export` | **Tidak ada throttle khusus**      | 10 req/menit (G2) |
-| `POST /v1/auth/login`    | 100 req/60 detik (global)          | Tetap             |
+Perubahan terbesar adalah `/reports`: 257 kB → 158 kB, turun sekitar **38,5%**.
 
 ---
 
-## 7. Security Headers Baseline
+## 4. Report dan Export
 
-Diukur dari konfigurasi `apps/api/src/main.ts`:
+| Kontrol             | Baseline               | Hasil akhir                             |
+| ------------------- | ---------------------- | --------------------------------------- |
+| Throttle export     | Tidak ada limit khusus | 10 request/menit                        |
+| Bukti enforcement   | Tidak ada              | E2E request ke-11 menghasilkan HTTP 429 |
+| Tenant/outlet scope | Unit test parsial      | Security test lulus                     |
+| Bundle UI report    | 257 kB                 | 158 kB                                  |
 
-| Header                             | Status                                  |
-| ---------------------------------- | --------------------------------------- |
-| `Content-Security-Policy`          | ✅ Terpasang via Helmet (self-only)     |
-| `X-Frame-Options` (frameAncestors) | ✅ Terpasang                            |
-| `X-Content-Type-Options`           | ✅ Terpasang via Helmet                 |
-| CORS origin whitelist              | ✅ Terkontrol via `ALLOWED_ORIGINS` env |
-| Throttle global                    | ✅ 100 req/60s via ThrottlerGuard       |
-
----
-
-## 8. CI Pipeline Baseline
-
-**Status CI saat ini** (`.github/workflows/ci.yml`):
-
-| Step                                       | Status                                  |
-| ------------------------------------------ | --------------------------------------- |
-| Install dependencies (`--frozen-lockfile`) | ✅ Ada                                  |
-| Format check                               | ⚠️ Ada tapi silent (`                   |     | true`) |
-| Build shared packages                      | ✅ Ada                                  |
-| Generate Prisma client                     | ✅ Ada                                  |
-| Typecheck monorepo                         | ✅ Ada                                  |
-| **Lint**                                   | ❌ Belum ada                            |
-| **API unit test**                          | ❌ Belum ada                            |
-| **API build**                              | ❌ Belum ada                            |
-| **Web build**                              | ❌ Belum ada                            |
-| **Route guard test**                       | ❌ Belum ada                            |
-| **Workspace entrypoint test**              | ❌ Belum ada                            |
-| **API typecheck**                          | ❌ Belum ada (hanya monorepo typecheck) |
+Benchmark p95 API dengan dataset 1.000+ transaksi belum dijalankan karena belum ada dataset staging
+yang aman dan representatif. Angka estimasi lama dihapus agar tidak diperlakukan sebagai hasil ukur.
+Benchmark tersebut menjadi waiver UAT, bukan klaim lulus palsu.
 
 ---
 
-## 9. Rencana Pengukuran Ulang (After Sprint 8)
+## 5. Security dan Dependency Performance
 
-Setelah seluruh S8-02 s/d S8-07 selesai, ukur ulang:
+Security upgrade final:
 
-- [ ] Bundle size route kritis (next build)
-- [ ] API response time report/export
-- [ ] Throttle: 429 saat > 10 req/menit pada export
-- [ ] CSP headers di response API dan web
-- [ ] Unit test + E2E test count & pass rate
-- [ ] CI pipeline — semua gate lulus
+- Next.js 15.5.21 Maintenance LTS.
+- bcrypt 6.0.0.
+- SheetJS 0.20.3.
+- sharp ≥ 0.35.0.
+- postcss ≥ 8.5.12.
+
+`pnpm audit --prod --audit-level high` menghasilkan **No known vulnerabilities found**.
+Build final tetap memenuhi seluruh bundle budget setelah upgrade.
 
 ---
 
-_File ini diperbarui setiap ada optimasi terukur di Sprint 8._
+## 6. CI Quality Gate
+
+| Step                    | Status     |
+| ----------------------- | ---------- |
+| Frozen lockfile install | ✅         |
+| Format check            | ✅         |
+| Lint                    | ✅ 0 error |
+| Shared package build    | ✅         |
+| Prisma generate         | ✅         |
+| API/web typecheck       | ✅         |
+| Unit test               | ✅         |
+| API/web build           | ✅         |
+| Route guard             | ✅         |
+| Workspace entrypoint    | ✅         |
+
+E2E tetap dijalankan sebagai gate penutupan terpisah karena membutuhkan lifecycle environment test.
+
+---
+
+## 7. Browser Metrics Waiver
+
+LCP, INP, dan CLS untuk route terautentikasi belum diukur menggunakan profil perangkat UAT.
+Pengukuran tanpa akun UAT, dataset, dan skenario perangkat yang tetap tidak dapat dibandingkan secara
+andal. Pengukuran ini harus dilakukan pada staging sebelum keputusan production launch.
+
+Status waiver: **diterima untuk handoff staging**, severity Medium, bukan temuan Critical/High.
