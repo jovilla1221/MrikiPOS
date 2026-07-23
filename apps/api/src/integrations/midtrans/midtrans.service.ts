@@ -20,15 +20,22 @@ export class MidtransService {
     const isProdStr = this.configService.get<string>('MIDTRANS_IS_PRODUCTION', 'false');
     this.isProduction = isProdStr === 'true' || isProdStr === '1';
 
-    // Enable mock mode if key is empty or default placeholders
-    this.mockMode =
+    const hasPlaceholderKey =
       !this.serverKey ||
       this.serverKey === 'your_midtrans_server_key' ||
       this.serverKey.trim() === '';
+    const isAppProduction =
+      this.configService.get<string>('NODE_ENV', 'development') === 'production';
 
-    if (this.mockMode) {
+    // Never bypass payment verification in an application production runtime.
+    // A missing sandbox key may enable mock mode only during local development.
+    this.mockMode = hasPlaceholderKey && !isAppProduction;
+
+    if (hasPlaceholderKey) {
       this.logger.warn(
-        'Midtrans server key not set or placeholder detected. Operating in MOCK mode.',
+        this.mockMode
+          ? 'Midtrans server key not set or placeholder detected. Operating in MOCK mode.'
+          : 'Midtrans server key not set or placeholder detected. Payment integration is disabled in production.',
       );
     }
   }
