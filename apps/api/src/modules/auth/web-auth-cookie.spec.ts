@@ -10,6 +10,14 @@ describe('AuthController - WEB-AUTH-001 HttpOnly Cookie Management', () => {
       user: { id: 'usr-1' },
       tokens: { access_token: 'mock-access-token', refresh_token: 'mock-refresh-token' },
     }),
+    register: jest.fn().mockResolvedValue({
+      user: { id: 'usr-1' },
+      tokens: { access_token: 'register-access-token', refresh_token: 'register-refresh-token' },
+    }),
+    googleAuth: jest.fn().mockResolvedValue({
+      user: { id: 'usr-1' },
+      tokens: { access_token: 'google-access-token', refresh_token: 'google-refresh-token' },
+    }),
     verifyOtp: jest.fn().mockResolvedValue({
       verified: true,
       tokens: { access_token: 'otp-access-token', refresh_token: 'otp-refresh-token' },
@@ -37,6 +45,45 @@ describe('AuthController - WEB-AUTH-001 HttpOnly Cookie Management', () => {
     expect(mockRes.cookie).toHaveBeenCalledWith(
       'mrikipos_auth',
       'mock-access-token',
+      expect.objectContaining({
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+      }),
+    );
+  });
+
+  it('should set HttpOnly mrikipos_auth cookie on Google login', async () => {
+    const mockRes: any = { cookie: jest.fn() };
+
+    await authController.googleAuth({ credential: 'google-id-token' }, mockRes);
+
+    expect(mockRes.cookie).toHaveBeenCalledWith(
+      'mrikipos_auth',
+      'google-access-token',
+      expect.objectContaining({
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+      }),
+    );
+  });
+
+  it('should set HttpOnly mrikipos_auth cookie on Google registration', async () => {
+    const mockRes: any = { cookie: jest.fn() };
+    const dto = {
+      nama: 'Owner',
+      phone: '081234567890',
+      pin: '123456',
+      nama_usaha: 'Toko Owner',
+      google_credential: 'google-id-token',
+    };
+
+    await authController.register(dto, mockRes);
+
+    expect(mockRes.cookie).toHaveBeenCalledWith(
+      'mrikipos_auth',
+      'register-access-token',
       expect.objectContaining({
         httpOnly: true,
         sameSite: 'lax',

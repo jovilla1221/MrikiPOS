@@ -1,4 +1,4 @@
-import { IsString, Matches, Length, IsEnum } from 'class-validator';
+import { IsString, Matches, Length, IsEnum, IsOptional, MaxLength } from 'class-validator';
 
 export enum OtpType {
   REGISTER = 'register',
@@ -22,6 +22,11 @@ export class RegisterDto {
   @IsString()
   @Length(2, 100, { message: 'Nama usaha harus 2-100 karakter' })
   nama_usaha!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4096)
+  google_credential?: string;
 }
 
 export class LoginDto {
@@ -32,6 +37,22 @@ export class LoginDto {
   @IsString()
   @Matches(/^[0-9]{6}$/, { message: 'PIN harus tepat 6 digit angka' })
   pin!: string;
+}
+
+export class GoogleAuthDto {
+  @IsString()
+  @MaxLength(4096)
+  credential!: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^08[0-9]{8,12}$/, { message: 'Nomor HP harus diawali 08 dan 10-14 digit' })
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^[0-9]{6}$/, { message: 'PIN harus tepat 6 digit angka' })
+  pin?: string;
 }
 
 export class OtpSendDto {

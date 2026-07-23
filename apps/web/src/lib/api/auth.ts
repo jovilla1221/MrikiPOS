@@ -5,11 +5,34 @@ export interface RegisterPayload {
   phone: string;
   pin: string;
   nama_usaha: string;
+  google_credential?: string;
 }
 
 export interface LoginPayload {
   phone: string;
   pin: string;
+}
+
+export interface GoogleAuthPayload {
+  credential: string;
+  phone?: string;
+  pin?: string;
+}
+
+export interface AuthResult {
+  user: any;
+  tokens: { access_token: string; refresh_token: string };
+}
+
+export interface GoogleAuthResult {
+  link_required: boolean;
+  profile?: {
+    email: string;
+    name: string;
+    picture?: string;
+  };
+  user?: any;
+  tokens?: { access_token: string; refresh_token: string };
 }
 
 export interface VerifyOtpPayload {
@@ -19,17 +42,28 @@ export interface VerifyOtpPayload {
 }
 
 export async function registerApi(payload: RegisterPayload) {
-  return apiClient<{ user_id: string; tenant_id: string; otp_sent: boolean }>('/v1/auth/register', {
+  return apiClient<{
+    user_id: string;
+    tenant_id: string;
+    otp_sent: boolean;
+    verified?: boolean;
+    user?: any;
+    tokens?: { access_token: string; refresh_token: string };
+  }>('/v1/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
 }
 
 export async function loginApi(payload: LoginPayload) {
-  return apiClient<{
-    user: any;
-    tokens: { access_token: string; refresh_token: string };
-  }>('/v1/auth/login', {
+  return apiClient<AuthResult>('/v1/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function googleAuthApi(payload: GoogleAuthPayload) {
+  return apiClient<GoogleAuthResult>('/v1/auth/google', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

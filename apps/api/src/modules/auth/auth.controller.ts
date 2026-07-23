@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import {
   RegisterDto,
   LoginDto,
+  GoogleAuthDto,
   OtpSendDto,
   OtpVerifyDto,
   RefreshDto,
@@ -38,8 +39,26 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  async register(@Body() dto: RegisterDto) {
+  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
     const data = await this.authService.register(dto);
+    if (data?.tokens?.access_token) {
+      this.setAuthCookie(res, data.tokens.access_token);
+    }
+    return {
+      success: true,
+      data,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Public()
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  async googleAuth(@Body() dto: GoogleAuthDto, @Res({ passthrough: true }) res: Response) {
+    const data = await this.authService.googleAuth(dto);
+    if (data?.tokens?.access_token) {
+      this.setAuthCookie(res, data.tokens.access_token);
+    }
     return {
       success: true,
       data,

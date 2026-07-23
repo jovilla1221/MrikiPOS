@@ -6,6 +6,8 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  Optional,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -14,7 +16,19 @@ import { createHash, randomUUID, randomInt } from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { RedisService } from '../../database/redis.service';
 import { WhatsAppService } from '../../integrations/whatsapp/whatsapp.service';
-import { RegisterDto, LoginDto, OtpSendDto, OtpVerifyDto, ForgotPinDto, OtpType } from './auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  GoogleAuthDto,
+  OtpSendDto,
+  OtpVerifyDto,
+  ForgotPinDto,
+  OtpType,
+} from './auth.dto';
+import {
+  GoogleAuthService,
+  VerifiedGoogleProfile,
+} from '../../integrations/google/google-auth.service';
 import { UserRole, TenantPlan, TenantStatus } from '@mrikipos/shared-types';
 
 const BCRYPT_COST = 12;
@@ -35,15 +49,27 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly whatsappService: WhatsAppService,
+    @Optional() private readonly googleAuthService?: GoogleAuthService,
   ) {}
 
   /**
    * Registrasi tenant baru + owner user + default outlet
    */
   async register(dto: RegisterDto) {
+    const googleProfile = dto.google_credential
+      ? await this.verifyGoogleCredential(dto.google_credential)
+      : undefined;
+
     // Check if phone already registered
     const existingUser = await this.prisma.user.findFirst({
-      where: { phone: dto.phone },
+      where: {
+        OR: [
+          { phone: dto.phone },
+          ...(googleProfile
+            ? [{ email: googleProfile.email }, { google_sub: googleProfile.sub }]
+            : []),
+        ],
+      },
     });
 
     if (existingUser) {
@@ -51,7 +77,10 @@ export class AuthService {
         success: false,
         error: {
           code: 'CONFLICT',
-          message: 'Nomor HP sudah terdaftar. Silakan login.',
+          message:
+            existingUser.phone === dto.phone
+              ? 'Nomor HP sudah terdaftar. Silakan login.'
+              : 'Akun Google sudah terdaftar. Silakan masuk dengan Google.',
         },
         timestamp: new Date().toISOString(),
       });
@@ -65,6 +94,7 @@ export class AuthService {
         data: {
           nama: dto.nama_usaha,
           phone: dto.phone,
+          email: googleProfile?.email,
           plan: TenantPlan.FREE,
           status: TenantStatus.ACTIVE,
           settings: {
@@ -89,6 +119,8 @@ export class AuthService {
           outlet_id: outlet.id,
           nama: dto.nama,
           phone: dto.phone,
+          email: googleProfile?.email,
+          google_sub: googleProfile?.sub,
           pin_hash: pinHash,
           role: UserRole.OWNER,
         },
@@ -96,6 +128,20 @@ export class AuthService {
 
       return { tenant, outlet, user };
     });
+
+    if (googleProfile) {
+      const tokens = await this.generateTokens(result.user);
+
+      return {
+        user: this.toUserSession(result.user, result.outlet),
+        tokens,
+        user_id: result.user.id,
+        tenant_id: result.tenant.id,
+        otp_sent: false,
+        verified: true,
+        message: 'Registrasi dengan Google berhasil.',
+      };
+    }
 
     // Generate and send OTP
     await this.sendOtp({ phone: dto.phone, type: OtpType.REGISTER });
@@ -177,15 +223,127 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
 
     return {
-      user: {
-        id: user.id,
-        nama: user.nama,
-        phone: user.phone,
-        role: user.role,
-        tenant_id: user.tenant_id,
-        outlet_id: user.outlet_id,
-        outlet_nama: user.outlet.nama,
+      user: this.toUserSession(user, user.outlet),
+      tokens,
+    };
+  }
+
+  /**
+   * Login Google. Akun lama dapat ditautkan satu kali memakai nomor HP + PIN.
+   * Setelah google_sub tersimpan, login berikutnya hanya memerlukan kredensial Google.
+   */
+  async googleAuth(dto: GoogleAuthDto) {
+    const profile = await this.verifyGoogleCredential(dto.credential);
+    let user = await this.prisma.user.findFirst({
+      where: {
+        OR: [{ google_sub: profile.sub }, { email: profile.email }],
+        is_active: true,
       },
+      include: { tenant: true, outlet: true },
+    });
+
+    if (user) {
+      if (user.google_sub && user.google_sub !== profile.sub) {
+        throw new UnauthorizedException({
+          success: false,
+          error: {
+            code: 'GOOGLE_ACCOUNT_MISMATCH',
+            message: 'Email tersebut sudah terhubung ke akun Google lain.',
+          },
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          email: profile.email,
+          google_sub: profile.sub,
+          last_login: new Date(),
+        },
+        include: { tenant: true, outlet: true },
+      });
+
+      const tokens = await this.generateTokens(user);
+      return {
+        link_required: false,
+        user: this.toUserSession(user, user.outlet),
+        tokens,
+      };
+    }
+
+    if (!dto.phone || !dto.pin) {
+      return {
+        link_required: true,
+        profile: {
+          email: profile.email,
+          name: profile.name,
+          picture: profile.picture,
+        },
+      };
+    }
+
+    const lockedKey = LOGIN_LOCKED_KEY(dto.phone);
+    if (await this.redis.get(lockedKey)) {
+      throw new HttpException(
+        {
+          success: false,
+          error: {
+            code: 'ACCOUNT_LOCKED',
+            message:
+              'Akun dikunci sementara karena terlalu banyak percobaan. Coba lagi dalam 15 menit.',
+          },
+          timestamp: new Date().toISOString(),
+        },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    user = await this.prisma.user.findFirst({
+      where: { phone: dto.phone, is_active: true },
+      include: { tenant: true, outlet: true },
+    });
+
+    if (!user || !(await bcrypt.compare(dto.pin, user.pin_hash))) {
+      await this.recordFailedLogin(dto.phone);
+      throw new UnauthorizedException({
+        success: false,
+        error: {
+          code: 'INVALID_CREDENTIALS',
+          message: 'Nomor HP atau PIN salah.',
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    await this.redis.del(LOGIN_FAILED_KEY(dto.phone));
+    await this.redis.del(lockedKey);
+
+    try {
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          email: profile.email,
+          google_sub: profile.sub,
+          last_login: new Date(),
+        },
+        include: { tenant: true, outlet: true },
+      });
+    } catch {
+      throw new ConflictException({
+        success: false,
+        error: {
+          code: 'GOOGLE_ACCOUNT_ALREADY_LINKED',
+          message: 'Akun Google tersebut sudah terhubung ke pengguna lain.',
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    const tokens = await this.generateTokens(user);
+    return {
+      link_required: false,
+      user: this.toUserSession(user, user.outlet),
       tokens,
     };
   }
@@ -300,15 +458,7 @@ export class AuthService {
 
     return {
       verified: true,
-      user: {
-        id: user.id,
-        nama: user.nama,
-        phone: user.phone,
-        role: user.role,
-        tenant_id: user.tenant_id,
-        outlet_id: user.outlet_id,
-        outlet_nama: user.outlet?.nama,
-      },
+      user: this.toUserSession(user, user.outlet),
       tokens,
     };
   }
@@ -500,6 +650,27 @@ export class AuthService {
   // ============================================================================
   // PRIVATE HELPERS
   // ============================================================================
+
+  private async verifyGoogleCredential(credential: string): Promise<VerifiedGoogleProfile> {
+    if (!this.googleAuthService) {
+      throw new ServiceUnavailableException('Login Google belum tersedia.');
+    }
+
+    return this.googleAuthService.verifyCredential(credential);
+  }
+
+  private toUserSession(user: any, outlet?: { nama?: string } | null) {
+    return {
+      id: user.id,
+      nama: user.nama,
+      phone: user.phone,
+      email: user.email ?? undefined,
+      role: user.role,
+      tenant_id: user.tenant_id,
+      outlet_id: user.outlet_id,
+      outlet_nama: outlet?.nama,
+    };
+  }
 
   /**
    * Helper to generate Access and Refresh JWT tokens
