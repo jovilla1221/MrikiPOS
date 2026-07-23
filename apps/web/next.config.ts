@@ -3,6 +3,14 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@mrikipos/shared-types', '@mrikipos/shared-utils'],
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://127.0.0.1:4000/:path*',
+      },
+    ];
+  },
   async headers() {
     return [
       {

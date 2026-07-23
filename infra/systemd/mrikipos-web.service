@@ -1,0 +1,24 @@
+[Unit]
+Description=MrikiPOS Web
+Wants=network-online.target
+After=network-online.target mrikipos-api.service
+Requires=mrikipos-api.service
+
+[Service]
+Type=simple
+User=filla_saputro
+Group=filla_saputro
+WorkingDirectory=/home/filla_saputro/mrikipos/apps/web
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node /home/filla_saputro/mrikipos/apps/web/node_modules/next/dist/bin/next start --port 3000 --hostname 0.0.0.0
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+KillSignal=SIGTERM
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,24 @@
+[Unit]
+Description=MrikiPOS API
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=simple
+User=filla_saputro
+Group=filla_saputro
+WorkingDirectory=/home/filla_saputro/mrikipos/apps/api
+EnvironmentFile=/home/filla_saputro/mrikipos/.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node /home/filla_saputro/mrikipos/apps/api/dist/main.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+KillSignal=SIGTERM
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

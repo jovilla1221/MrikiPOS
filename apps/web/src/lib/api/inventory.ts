@@ -26,7 +26,7 @@ export const importProducts = async (file: File, mode: 'create' | 'upsert') => {
   formData.append('file', file);
   formData.append('mode', mode);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
   const response = await fetch(`${API_BASE_URL}/v1/products/import`, {
     method: 'POST',
