@@ -39,15 +39,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             pembayaran tunai dan QRIS.
           </p>
 
-          <div className="[animation:floatY_6s_ease-in-out_infinite]">
-            <Image
-              src="/brand/ilustrasi-kasir.webp"
-              alt="Ilustrasi kasir MrikiPOS"
-              width={440}
-              height={240}
-              className="h-[240px] w-full max-w-[440px] rounded-[20px] object-cover"
-            />
-          </div>
+          <Image
+            src="/brand/ilustrasi-kasir.webp"
+            alt="Ilustrasi kasir MrikiPOS"
+            width={440}
+            height={240}
+            className="h-[240px] w-full max-w-[440px] rounded-[20px] object-cover"
+          />
 
           <div className="flex flex-wrap gap-2.5">
             {CHIPS.map((chip) => (
