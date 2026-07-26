@@ -199,7 +199,7 @@ export default function RegisterPage() {
             <Input
               id="reg-phone"
               type="tel"
-              placeholder="081234567890"
+              placeholder="Masukkan no HP di sini"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className={FIELD_CLASS}
