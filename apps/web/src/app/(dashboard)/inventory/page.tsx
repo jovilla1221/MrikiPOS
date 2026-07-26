@@ -3,10 +3,12 @@
 import React, { useState } from 'react';
 import { useStockHistory, useLowStock } from '@/hooks/use-inventory';
 import { ImportExcelForm } from '@/components/inventory/import-excel-form';
-import { Button } from '@/components/ui/button';
+import { StockOpnameForm } from '@/components/inventory/stock-opname-form';
 
 export default function InventoryPage() {
-  const [activeTab, setActiveTab] = useState<'low-stock' | 'history' | 'import'>('low-stock');
+  const [activeTab, setActiveTab] = useState<'low-stock' | 'history' | 'opname' | 'import'>(
+    'low-stock',
+  );
 
   const { data: lowStockData, isLoading: loadingLow } = useLowStock();
   const { data: historyData, isLoading: loadingHistory } = useStockHistory();
@@ -15,7 +17,9 @@ export default function InventoryPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">Inventory</h1>
-        <p className="text-gray-500">Kelola peringatan stok, riwayat mutasi, dan import produk.</p>
+        <p className="text-gray-500">
+          Kelola peringatan stok, riwayat mutasi, stock opname, dan import produk.
+        </p>
       </div>
 
       <div className="flex space-x-1 border-b border-gray-200">
@@ -30,6 +34,12 @@ export default function InventoryPage() {
           className={`px-4 py-2 text-sm font-medium border-b-2 ${activeTab === 'history' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
         >
           Riwayat Mutasi
+        </button>
+        <button
+          onClick={() => setActiveTab('opname')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 ${activeTab === 'opname' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+        >
+          Stock Opname
         </button>
         <button
           onClick={() => setActiveTab('import')}
@@ -144,6 +154,8 @@ export default function InventoryPage() {
             </table>
           </div>
         )}
+
+        {activeTab === 'opname' && <StockOpnameForm />}
 
         {activeTab === 'import' && <ImportExcelForm />}
       </div>
