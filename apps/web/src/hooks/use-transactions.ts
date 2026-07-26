@@ -99,9 +99,7 @@ export const useCreateTransaction = () => {
       queryClient.invalidateQueries({ queryKey: ['products'] }); // Invalidate products as stock decreased
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.error?.message || error?.message || 'Gagal menyimpan transaksi',
-      );
+      toast.error(error?.message || 'Gagal menyimpan transaksi');
     },
   });
 };
@@ -119,7 +117,7 @@ export const useVoidTransaction = () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.error?.message || 'Gagal membatalkan transaksi');
+      toast.error(error?.message || 'Gagal membatalkan transaksi');
     },
   });
 };

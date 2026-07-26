@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { QrisChargeResponse } from '@mrikipos/shared-types';
+import { toast } from 'sonner';
 
 export default function POSPage() {
   const [isPaymentOpen, setIsPaymentOpen] = React.useState(false);
@@ -79,9 +80,13 @@ export default function POSPage() {
             if (qrisRes) {
               setLastTransaction(createdTxn);
               onQrisCreated(qrisRes);
+            } else {
+              toast.error('Kode QRIS gagal dibuat. Transaksi tersimpan, ulangi pembayaran.');
             }
-          } catch (err) {
-            console.error('Failed to create QRIS charge:', err);
+          } catch (err: any) {
+            toast.error(
+              err?.message || 'Kode QRIS gagal dibuat. Transaksi tersimpan, ulangi pembayaran.',
+            );
           } finally {
             setIsProcessingQris(false);
           }

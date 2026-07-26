@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createQrisPayment, getPaymentStatus, mockPay } from '@/lib/api/payments';
+import { toast } from 'sonner';
 
 export const paymentKeys = {
   all: ['payments'] as const,
@@ -40,6 +41,9 @@ export const useMockPay = () => {
     mutationFn: (paymentId: string) => mockPay(paymentId),
     onSuccess: (_, paymentId) => {
       queryClient.invalidateQueries({ queryKey: paymentKeys.status(paymentId) });
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Simulasi pembayaran gagal');
     },
   });
 };
