@@ -1,0 +1,11 @@
+[Unit]
+Description=Run MrikiPOS database backup daily
+
+[Timer]
+OnCalendar=*-*-* 19:00:00
+# 19:00 UTC = 02:00 WIB, di luar jam operasional kasir.
+RandomizedDelaySec=10m
+Persistent=true
+
+[Install]
+WantedBy=timers.target
