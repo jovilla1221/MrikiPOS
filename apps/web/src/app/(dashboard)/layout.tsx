@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth.store';
 import { logoutApi } from '@/lib/api/auth';
@@ -22,8 +22,33 @@ import {
   Clock,
 } from 'lucide-react';
 
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  /** Hanya tampil untuk role tertentu; kosong = semua role. */
+  roles?: string[];
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { href: '/dashboard', label: 'Ringkasan', icon: LayoutDashboard },
+  { href: '/pos', label: 'Kasir (POS)', icon: ShoppingCart },
+  { href: '/products', label: 'Katalog Produk', icon: Package },
+  { href: '/inventory', label: 'Inventory', icon: ClipboardList },
+  { href: '/transactions', label: 'Riwayat Transaksi', icon: Receipt },
+  { href: '/customers', label: 'Pelanggan', icon: UserCheck },
+  { href: '/credits', label: 'Kasbon', icon: CreditCard },
+  { href: '/shifts', label: 'Shift Kasir', icon: Clock },
+  { href: '/reports', label: 'Laporan', icon: BarChart3, roles: ['OWNER', 'MANAGER'] },
+  { href: '/approvals', label: 'Approval', icon: UserCheck },
+  { href: '/users', label: 'Kelola User', icon: Users, roles: ['OWNER'] },
+  { href: '/audit-logs', label: 'Audit Trail', icon: ClipboardList, roles: ['OWNER', 'MANAGER'] },
+  { href: '/settings', label: 'Pengaturan', icon: Store, roles: ['OWNER'] },
+];
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, clearAuth } = useAuthStore();
 
   React.useEffect(() => {
@@ -54,110 +79,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </span>
           </div>
 
-          {/* Nav Links */}
+          {/* Nav Links — item aktif mengikuti route saat ini */}
           <nav className="flex flex-col gap-1">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <LayoutDashboard className="h-5 w-5 text-slate-500" />
-              <span>Ringkasan</span>
-            </Link>
-            <Link
-              href="/pos"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
-            >
-              <ShoppingCart className="h-5 w-5 text-emerald-600" />
-              <span>Kasir (POS)</span>
-            </Link>
-            <Link
-              href="/products"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <Package className="h-5 w-5 text-slate-500" />
-              <span>Katalog Produk</span>
-            </Link>
-            <Link
-              href="/inventory"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <ClipboardList className="h-5 w-5 text-slate-500" />
-              <span>Inventory</span>
-            </Link>
-            <Link
-              href="/transactions"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <Receipt className="h-5 w-5 text-slate-500" />
-              <span>Riwayat Transaksi</span>
-            </Link>
-            <Link
-              href="/customers"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <UserCheck className="h-5 w-5 text-slate-500" />
-              <span>Pelanggan</span>
-            </Link>
-            <Link
-              href="/credits"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <CreditCard className="h-5 w-5 text-slate-500" />
-              <span>Kasbon</span>
-            </Link>
-            <Link
-              href="/shifts"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <Clock className="h-5 w-5 text-slate-500" />
-              <span>Shift Kasir</span>
-            </Link>
-            {(user?.role === 'OWNER' || user?.role === 'MANAGER') && (
-              <Link
-                href="/reports"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                <BarChart3 className="h-5 w-5 text-slate-500" />
-                <span>Laporan</span>
-              </Link>
-            )}
-
-            <Link
-              href="/approvals"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <UserCheck className="h-5 w-5 text-slate-500" />
-              <span>Approval</span>
-            </Link>
-
-            {user?.role === 'OWNER' && (
-              <Link
-                href="/users"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                <Users className="h-5 w-5 text-slate-500" />
-                <span>Kelola User</span>
-              </Link>
-            )}
-
-            {(user?.role === 'OWNER' || user?.role === 'MANAGER') && (
-              <Link
-                href="/audit-logs"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                <ClipboardList className="h-5 w-5 text-slate-500" />
-                <span>Audit Trail</span>
-              </Link>
-            )}
-
-            {user?.role === 'OWNER' && (
-              <Link
-                href="/settings"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                <Store className="h-5 w-5 text-slate-500" />
-                <span>Pengaturan</span>
-              </Link>
+            {NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(user?.role || '')).map(
+              (item) => {
+                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={active ? 'page' : undefined}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      active
+                        ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
+                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <Icon className={`h-5 w-5 ${active ? 'text-emerald-600' : 'text-slate-500'}`} />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              },
             )}
           </nav>
         </div>
