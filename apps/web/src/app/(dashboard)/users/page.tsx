@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useUsers, useCreateUser, useUpdateUser, useResetUserPin, useSetUserStatus } from '@/hooks/use-users';
 import { UserRole } from '@mrikipos/shared-types';
 import { Users, Plus, ShieldAlert, KeyRound, UserCheck, UserX, Edit2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function UsersPage() {
   const { user: currentUser } = useAuthStore();
@@ -121,7 +122,7 @@ export default function UsersPage() {
         is_active: !user.is_active,
       });
     } catch (err: any) {
-      alert(err?.message || 'Gagal mengubah status user');
+      toast.error(err?.message || 'Gagal mengubah status user');
     }
   };
 

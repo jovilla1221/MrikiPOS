@@ -135,7 +135,15 @@ export default function LoginPage() {
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200">
             <p className="font-semibold">Tautkan {googleEmail}</p>
             <p className="mt-1">
-              Masukkan nomor HP dan PIN sekali ini. Login berikutnya cukup dengan Google.
+              Masukkan nomor HP dan PIN akun MrikiPOS Anda sekali ini. Login berikutnya cukup dengan
+              Google.
+            </p>
+            <p className="mt-1">
+              Belum punya akun?{' '}
+              <Link href="/register" className="font-semibold underline underline-offset-2">
+                Daftar Usaha Baru dengan Google
+              </Link>{' '}
+              — tanpa OTP WhatsApp.
             </p>
             <button
               type="button"
