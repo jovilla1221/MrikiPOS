@@ -10,7 +10,9 @@ const CHIPS = ['Offline-first', 'Tunai & QRIS', 'Gratis untuk UMKM'];
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className={`${jakarta.className} flex min-h-screen flex-wrap bg-white`}>
+    <main
+      className={`${jakarta.className} flex min-h-screen flex-wrap bg-white [--background:#ffffff] [--foreground:#0f172a] [color-scheme:light]`}
+    >
       {/* Brand panel */}
       <aside className="relative flex flex-[1_1_380px] flex-col justify-center overflow-hidden bg-[#047857] px-8 py-14 text-white lg:px-[52px]">
         <div className="absolute -right-[120px] -top-[120px] h-[340px] w-[340px] rounded-full bg-white/[0.06]" />

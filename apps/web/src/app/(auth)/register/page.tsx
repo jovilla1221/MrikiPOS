@@ -13,8 +13,10 @@ import {
   GoogleSignInButton,
 } from '@/components/auth/google-sign-in-button';
 
+// Halaman auth selalu bertema terang (sesuai desain) — override varian dark:
+// bawaan komponen Input agar kolom tidak berubah gelap di perangkat dark mode.
 const FIELD_CLASS =
-  'h-[52px] rounded-[14px] border-[1.5px] border-slate-200 bg-slate-50 px-[18px] text-base font-medium text-slate-900 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-600/10';
+  'h-[52px] rounded-[14px] border-[1.5px] border-slate-200 bg-slate-50 px-[18px] text-base font-medium text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-600/10 dark:border-slate-200 dark:bg-slate-50 dark:text-slate-900 dark:placeholder:text-slate-400';
 
 export default function RegisterPage() {
   const router = useRouter();
