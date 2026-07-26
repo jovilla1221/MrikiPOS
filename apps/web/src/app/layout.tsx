@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { QueryProvider } from '@/lib/providers/query-provider';
 import { SWRegister } from '@/components/providers/sw-register';
+import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: 'MrikiPOS — Solusi POS Cerdas UMKM Kota Blitar',
@@ -21,6 +22,7 @@ export default function RootLayout({
         <QueryProvider>
           <SWRegister />
           {children}
+          <Toaster richColors position="top-center" closeButton />
         </QueryProvider>
       </body>
     </html>
