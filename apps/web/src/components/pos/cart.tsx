@@ -1,9 +1,17 @@
 import * as React from 'react';
-import { useCartStore } from '@/stores/cart.store';
+import { useCartStore, HeldOrder } from '@/stores/cart.store';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils/format';
-import { Trash2, Plus, Minus } from 'lucide-react';
+import { Trash2, Plus, Minus, Pause } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+
+function heldOrderTotal(order: HeldOrder): number {
+  const subtotal = order.items.reduce(
+    (total, item) => total + (item.harga - item.diskon_item) * item.qty,
+    0,
+  );
+  return Math.max(0, subtotal - order.diskon);
+}
 
 interface CartProps {
   onPay: () => void;
@@ -21,6 +29,10 @@ export function Cart({ onPay }: CartProps) {
     setDiskon,
     catatan,
     setCatatan,
+    heldOrders,
+    holdCart,
+    resumeHeld,
+    deleteHeld,
   } = useCartStore();
 
   const handleDiskonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,6 +57,43 @@ export function Cart({ onPay }: CartProps) {
           </Button>
         )}
       </div>
+
+      {/* Held Orders */}
+      {heldOrders.length > 0 && (
+        <div className="border-b bg-amber-50/60 p-3 dark:border-slate-800 dark:bg-amber-950/20">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+            Pesanan Ditahan ({heldOrders.length})
+          </p>
+          <div className="max-h-40 space-y-2 overflow-y-auto">
+            {heldOrders.map((order) => (
+              <div
+                key={order.id}
+                className="flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm dark:border-amber-900 dark:bg-slate-900"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-slate-900 dark:text-slate-100">
+                    {order.label}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {order.items.length} item · {formatCurrency(heldOrderTotal(order))}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button size="sm" variant="outline" onClick={() => resumeHeld(order.id)}>
+                    Lanjutkan
+                  </Button>
+                  <button
+                    onClick={() => deleteHeld(order.id)}
+                    className="px-2 text-xs text-red-500 hover:underline"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Items List */}
       <div className="flex-1 overflow-y-auto p-4">
@@ -144,13 +193,25 @@ export function Cart({ onPay }: CartProps) {
             onChange={(e) => setCatatan(e.target.value)}
             className="mt-2"
           />
-          <Button
-            className="mt-4 w-full h-12 text-lg font-bold"
-            disabled={items.length === 0}
-            onClick={onPay}
-          >
-            Bayar Pesanan
-          </Button>
+          <div className="mt-4 flex gap-2">
+            <Button
+              variant="outline"
+              className="h-12 shrink-0"
+              disabled={items.length === 0}
+              onClick={holdCart}
+              title="Tahan pesanan ini, lanjutkan nanti"
+            >
+              <Pause className="mr-1 h-4 w-4" />
+              Tahan
+            </Button>
+            <Button
+              className="h-12 flex-1 text-lg font-bold"
+              disabled={items.length === 0}
+              onClick={onPay}
+            >
+              Bayar Pesanan
+            </Button>
+          </div>
         </div>
       </div>
     </div>

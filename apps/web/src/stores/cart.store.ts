@@ -12,10 +12,20 @@ export interface CartItem {
   stok_tersedia: number;
 }
 
+export interface HeldOrder {
+  id: string;
+  label: string;
+  held_at: string;
+  items: CartItem[];
+  diskon: number;
+  catatan: string | null;
+}
+
 interface CartStore {
   items: CartItem[];
   diskon: number;
   catatan: string | null;
+  heldOrders: HeldOrder[];
 
   addItem: (
     product: { id: string; nama: string; harga_jual: number; stok: number },
@@ -26,11 +36,35 @@ interface CartStore {
   setDiskon: (amount: number) => void;
   setCatatan: (note: string) => void;
   clearCart: () => void;
+  holdCart: () => void;
+  resumeHeld: (id: string) => void;
+  deleteHeld: (id: string) => void;
 
   // Computed (selectors)
   getSubtotal: () => number;
   getGrandTotal: () => number;
   getItemCount: () => number;
+}
+
+function snapshotOrder(state: {
+  items: CartItem[];
+  diskon: number;
+  catatan: string | null;
+}): HeldOrder {
+  const now = new Date();
+  return {
+    id:
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+    label:
+      state.catatan?.trim() ||
+      `Pesanan ${now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`,
+    held_at: now.toISOString(),
+    items: state.items,
+    diskon: state.diskon,
+    catatan: state.catatan,
+  };
 }
 
 export const useCartStore = create<CartStore>()(
@@ -39,6 +73,7 @@ export const useCartStore = create<CartStore>()(
       items: [],
       diskon: 0,
       catatan: null,
+      heldOrders: [],
 
       addItem: (product, qty = 1) => {
         set((state) => {
@@ -98,6 +133,44 @@ export const useCartStore = create<CartStore>()(
       setCatatan: (note) => set({ catatan: note }),
 
       clearCart: () => set({ items: [], diskon: 0, catatan: null }),
+
+      holdCart: () => {
+        set((state) => {
+          if (state.items.length === 0) return state;
+          return {
+            heldOrders: [snapshotOrder(state), ...state.heldOrders],
+            items: [],
+            diskon: 0,
+            catatan: null,
+          };
+        });
+      },
+
+      resumeHeld: (id) => {
+        set((state) => {
+          const target = state.heldOrders.find((h) => h.id === id);
+          if (!target) return state;
+
+          const rest = state.heldOrders.filter((h) => h.id !== id);
+          // Keranjang aktif yang belum kosong ikut ditahan agar tidak hilang.
+          if (state.items.length > 0) {
+            rest.unshift(snapshotOrder(state));
+          }
+
+          return {
+            heldOrders: rest,
+            items: target.items,
+            diskon: target.diskon,
+            catatan: target.catatan,
+          };
+        });
+      },
+
+      deleteHeld: (id) => {
+        set((state) => ({
+          heldOrders: state.heldOrders.filter((h) => h.id !== id),
+        }));
+      },
 
       getSubtotal: () => {
         const state = get();
