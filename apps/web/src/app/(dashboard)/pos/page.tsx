@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { QrisChargeResponse } from '@mrikipos/shared-types';
 import { toast } from 'sonner';
+import { printReceiptElement } from '@/lib/utils/print-receipt';
 
 export default function POSPage() {
   const [isPaymentOpen, setIsPaymentOpen] = React.useState(false);
@@ -100,13 +101,7 @@ export default function POSPage() {
 
   const handlePrint = () => {
     if (receiptRef.current) {
-      const printContents = receiptRef.current.innerHTML;
-      const originalContents = document.body.innerHTML;
-
-      document.body.innerHTML = printContents;
-      window.print();
-      document.body.innerHTML = originalContents;
-      window.location.reload();
+      printReceiptElement(receiptRef.current, 58);
     }
   };
 

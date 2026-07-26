@@ -44,7 +44,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 dark:bg-slate-950">
       {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-white dark:bg-slate-900 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4">
+      <aside className="print:hidden w-full md:w-64 bg-white dark:bg-slate-900 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4">
         <div>
           {/* Logo */}
           <div className="flex items-center gap-2 px-2 py-4 mb-4 border-b border-slate-100 dark:border-slate-800">
