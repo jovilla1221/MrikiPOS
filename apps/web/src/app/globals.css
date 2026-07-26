@@ -1,5 +1,13 @@
 @import 'tailwindcss';
 
+/*
+ * Varian dark: diikat ke class .dark, BUKAN prefers-color-scheme perangkat.
+ * Desain MrikiPOS (auth + dashboard) light-only; tanpa elemen ber-class
+ * .dark, seluruh kelas dark:* menjadi tidak aktif sehingga UI tidak
+ * berubah gelap mengikuti tema HP/browser kasir.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     /* === Brand Colors (Aligned with MrikiPOS Logo) === */
