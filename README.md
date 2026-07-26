@@ -32,6 +32,7 @@ mrikipos/
 ## 🚀 Panduan Memulai (Quick Start)
 
 ### Prasyarat
+
 - Node.js >= 20.0.0
 - pnpm >= 9.0.0
 - PostgreSQL & Redis terinstal dan berjalan
@@ -43,6 +44,7 @@ pnpm install
 ```
 
 ### Konfigurasi Environment Variable
+
 Salin file `.env.example` ke `.env` pada root project serta pada `apps/api/.env` dan `apps/web/.env` sesuai kebutuhan environment lokal Anda:
 
 ```bash
@@ -67,6 +69,7 @@ pnpm db:studio
 ```bash
 pnpm dev
 ```
+
 - Frontend Web: `http://localhost:3000`
 - Backend API: `http://localhost:4000` (atau sesuai konfigurasi `PORT`)
 
