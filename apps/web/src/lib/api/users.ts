@@ -1,3 +1,4 @@
+import { toQueryString } from './query';
 import { apiClient } from './client';
 import { User, UserRole } from '@mrikipos/shared-types';
 
@@ -31,7 +32,7 @@ export interface UserQueryParams {
 }
 
 export const getUsers = async (params?: UserQueryParams) => {
-  const query = new URLSearchParams(params as any).toString();
+  const query = toQueryString(params as Record<string, unknown>);
   const endpoint = query ? `/v1/users?${query}` : '/v1/users';
   return apiClient<User[]>(endpoint, { method: 'GET' });
 };

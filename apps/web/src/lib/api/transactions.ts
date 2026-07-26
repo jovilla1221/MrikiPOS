@@ -1,3 +1,4 @@
+import { toQueryString } from './query';
 import { apiClient } from './client';
 import { ApiResponse, Transaction, TransactionStatus } from '@mrikipos/shared-types';
 
@@ -38,7 +39,7 @@ export const createTransaction = async (data: CreateTransactionPayload) => {
 };
 
 export const getTransactions = async (params?: TransactionQueryParams) => {
-  const query = new URLSearchParams(params as any).toString();
+  const query = toQueryString(params as Record<string, unknown>);
   const endpoint = query ? `/v1/transactions?${query}` : '/v1/transactions';
   return apiClient<Transaction[]>(endpoint, { method: 'GET' });
 };

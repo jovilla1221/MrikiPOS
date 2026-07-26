@@ -1,3 +1,4 @@
+import { toQueryString } from './query';
 import { apiClient } from './client';
 import { Shift } from '@mrikipos/shared-types';
 
@@ -43,7 +44,7 @@ export const getCurrentShift = async () => {
 };
 
 export const getShifts = async (params?: ShiftQueryParams) => {
-  const query = new URLSearchParams(params as any).toString();
+  const query = toQueryString(params as Record<string, unknown>);
   const endpoint = query ? `/v1/shifts?${query}` : '/v1/shifts';
   return apiClient<Shift[]>(endpoint, { method: 'GET' });
 };

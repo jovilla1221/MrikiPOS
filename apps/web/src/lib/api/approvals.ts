@@ -1,3 +1,4 @@
+import { toQueryString } from './query';
 import { apiClient } from './client';
 import { ApprovalLogItem, ApprovalType, ApprovalStatus } from '@mrikipos/shared-types';
 
@@ -23,13 +24,13 @@ export interface ApprovalQueryParams {
 }
 
 export const getApprovals = async (params?: ApprovalQueryParams) => {
-  const query = new URLSearchParams(params as any).toString();
+  const query = toQueryString(params as Record<string, unknown>);
   const endpoint = query ? `/v1/approvals?${query}` : '/v1/approvals';
   return apiClient<ApprovalLogItem[]>(endpoint, { method: 'GET' });
 };
 
 export const getMyApprovals = async (params?: ApprovalQueryParams) => {
-  const query = new URLSearchParams(params as any).toString();
+  const query = toQueryString(params as Record<string, unknown>);
   const endpoint = query ? `/v1/approvals/mine?${query}` : '/v1/approvals/mine';
   return apiClient<ApprovalLogItem[]>(endpoint, { method: 'GET' });
 };

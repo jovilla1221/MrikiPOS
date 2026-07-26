@@ -1,3 +1,4 @@
+import { toQueryString } from './query';
 import { apiClient } from './client';
 import { useAuthStore } from '@/stores/auth.store';
 
@@ -11,7 +12,7 @@ export interface StockHistoryQueryParams {
 }
 
 export const getStockHistory = async (params?: StockHistoryQueryParams) => {
-  const query = new URLSearchParams(params as any).toString();
+  const query = toQueryString(params as Record<string, unknown>);
   const endpoint = query ? `/v1/stock/history?${query}` : '/v1/stock/history';
   return apiClient<any>(endpoint, { method: 'GET' });
 };

@@ -1,3 +1,4 @@
+import { toQueryString } from './query';
 import { apiClient } from './client';
 import { CustomerCredit, CreditSummary } from '@mrikipos/shared-types';
 
@@ -23,7 +24,7 @@ export interface CreditQueryParams {
 }
 
 export const getCredits = async (params?: CreditQueryParams) => {
-  const query = new URLSearchParams(params as any).toString();
+  const query = toQueryString(params as Record<string, unknown>);
   const endpoint = query ? `/v1/credits?${query}` : '/v1/credits';
   return apiClient<CustomerCredit[]>(endpoint, { method: 'GET' });
 };

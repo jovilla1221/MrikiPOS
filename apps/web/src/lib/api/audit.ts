@@ -1,3 +1,4 @@
+import { toQueryString } from './query';
 import { apiClient } from './client';
 import { AuditLogItem } from '@mrikipos/shared-types';
 
@@ -12,7 +13,7 @@ export interface AuditQueryParams {
 }
 
 export const getAuditLogs = async (params?: AuditQueryParams) => {
-  const query = new URLSearchParams(params as any).toString();
+  const query = toQueryString(params as Record<string, unknown>);
   const endpoint = query ? `/v1/audit-logs?${query}` : '/v1/audit-logs';
   return apiClient<AuditLogItem[]>(endpoint, { method: 'GET' });
 };

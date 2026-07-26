@@ -1,3 +1,4 @@
+import { toQueryString } from './query';
 import { apiClient } from './client';
 import { ApiResponse, Product } from '@mrikipos/shared-types';
 
@@ -12,7 +13,7 @@ export interface ProductQueryParams {
 }
 
 export const getProducts = async (params?: ProductQueryParams) => {
-  const query = new URLSearchParams(params as any).toString();
+  const query = toQueryString(params as Record<string, unknown>);
   const endpoint = query ? `/v1/products?${query}` : '/v1/products';
   return apiClient<any>(endpoint, { method: 'GET' });
 };
