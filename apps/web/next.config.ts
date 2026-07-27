@@ -2,6 +2,10 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  devIndicators: {
+    appIsrStatus: false,
+    buildActivity: false,
+  },
   transpilePackages: ['@mrikipos/shared-types', '@mrikipos/shared-utils'],
   async rewrites() {
     return [

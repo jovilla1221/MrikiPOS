@@ -83,3 +83,8 @@ textarea {
     transform: none;
   }
 }
+
+/* Sembunyikan logo Next.js Dev Indicator di pojok layar */
+nextjs-portal {
+  display: none !important;
+}
