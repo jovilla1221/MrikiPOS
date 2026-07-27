@@ -7,6 +7,9 @@ import {
   deleteProduct,
   adjustStock,
   getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
   ProductQueryParams,
 } from '@/lib/api/products';
 import {
@@ -132,5 +135,36 @@ export const useCategories = () => {
       }
     },
     staleTime: 60 * 60 * 1000, // 1 hour
+  });
+};
+
+export const useCreateCategory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productKeys.categories });
+    },
+  });
+};
+
+export const useUpdateCategory = (id: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { nama: string; deskripsi?: string }) => updateCategory(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productKeys.categories });
+    },
+  });
+};
+
+export const useDeleteCategory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productKeys.categories });
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+    },
   });
 };

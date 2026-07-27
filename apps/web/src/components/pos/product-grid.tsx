@@ -9,6 +9,18 @@ import { Input } from '@/components/ui/input';
 export function ProductGrid() {
   const [search, setSearch] = React.useState('');
   const [activeCategory, setActiveCategory] = React.useState<string | null>(null);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F2') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const { data: categoriesData } = useCategories();
   const { data: productsData, isLoading } = useProducts({
@@ -29,6 +41,7 @@ export function ProductGrid() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <Input
+            ref={searchInputRef}
             placeholder="Cari produk (F2)..."
             className="pl-10"
             value={search}

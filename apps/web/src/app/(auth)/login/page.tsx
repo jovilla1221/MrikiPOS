@@ -29,6 +29,7 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleCredential, setGoogleCredential] = useState('');
   const [googleEmail, setGoogleEmail] = useState('');
+  const [pinRequiredOnly, setPinRequiredOnly] = useState(false);
 
   const finishLogin = useCallback(
     (user: any, accessToken: string, refreshToken: string) => {
@@ -52,6 +53,13 @@ export default function LoginPage() {
         if (res.link_required && res.profile) {
           setGoogleCredential(credential);
           setGoogleEmail(res.profile.email);
+          setPinRequiredOnly(false);
+        }
+
+        if (res.pin_required && res.profile) {
+          setGoogleCredential(credential);
+          setGoogleEmail(res.profile.email);
+          setPinRequiredOnly(true);
         }
       } catch (err: any) {
         setError(err.message || 'Login Google gagal. Silakan coba lagi.');
@@ -66,7 +74,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
 
-    if (!isValidPhone(phone)) {
+    if (!pinRequiredOnly && !isValidPhone(phone)) {
       setError('Nomor HP tidak valid (harus diawali 08 dan 10-14 digit)');
       return;
     }
@@ -79,9 +87,13 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (googleCredential) {
-        const res = await googleAuthApi({ credential: googleCredential, phone, pin });
+        const res = await googleAuthApi({
+          credential: googleCredential,
+          phone: pinRequiredOnly ? undefined : phone,
+          pin,
+        });
         if (!res.user || !res.tokens) {
-          throw new Error('Akun Google belum berhasil ditautkan.');
+          throw new Error('Gagal login/menautkan Google.');
         }
         finishLogin(res.user, res.tokens.access_token, res.tokens.refresh_token);
         return;
@@ -135,7 +147,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        {googleCredential && (
+        {googleCredential && !pinRequiredOnly && (
           <div className="rounded-[14px] border-[1.5px] border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-800">
             <p className="font-bold">Tautkan {googleEmail}</p>
             <p className="mt-1">
@@ -163,20 +175,43 @@ export default function LoginPage() {
           </div>
         )}
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="login-phone" className="text-sm font-bold text-slate-900">
-            Nomor HP
-          </label>
-          <Input
-            id="login-phone"
-            type="tel"
-            placeholder="Masukkan no HP di sini"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className={FIELD_CLASS}
-            required
-          />
-        </div>
+        {googleCredential && pinRequiredOnly && (
+          <div className="rounded-[14px] border-[1.5px] border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-800">
+            <p className="font-bold">Google Terverifikasi</p>
+            <p className="mt-1">
+              Masukkan PIN Anda untuk mengonfirmasi login sebagai {googleEmail}.
+            </p>
+            <button
+              type="button"
+              className="mt-2 font-bold underline underline-offset-2"
+              onClick={() => {
+                setGoogleCredential('');
+                setGoogleEmail('');
+                setPinRequiredOnly(false);
+                setError('');
+              }}
+            >
+              Batal
+            </button>
+          </div>
+        )}
+
+        {!pinRequiredOnly && (
+          <div className="flex flex-col gap-2">
+            <label htmlFor="login-phone" className="text-sm font-bold text-slate-900">
+              Nomor HP
+            </label>
+            <Input
+              id="login-phone"
+              type="tel"
+              placeholder="Masukkan no HP di sini"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className={FIELD_CLASS}
+              required={!pinRequiredOnly}
+            />
+          </div>
+        )}
 
         <div className="flex flex-col gap-2">
           <label htmlFor="login-pin" className="text-sm font-bold text-slate-900">
@@ -199,7 +234,7 @@ export default function LoginPage() {
           isLoading={loading}
           className="mt-1.5 h-14 w-full rounded-[14px] bg-[#059669] text-base font-bold shadow-[0_6px_16px_-6px_rgba(5,150,105,0.5)] hover:bg-[#047857]"
         >
-          {googleCredential ? 'Tautkan Google & Masuk' : 'Masuk'}
+          {googleCredential ? (pinRequiredOnly ? 'Masuk dengan PIN' : 'Tautkan Google & Masuk') : 'Masuk'}
         </Button>
 
         <p className="text-center text-sm text-slate-500">

@@ -26,6 +26,7 @@ export interface AuthResult {
 
 export interface GoogleAuthResult {
   link_required: boolean;
+  pin_required?: boolean;
   profile?: {
     email: string;
     name: string;

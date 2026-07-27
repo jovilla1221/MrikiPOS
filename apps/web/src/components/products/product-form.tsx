@@ -3,6 +3,8 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCategories, useCreateProduct, useUpdateProduct } from '@/hooks/use-products';
+import { CategoryDialog } from './category-dialog';
+import { Plus, Info } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ProductFormProps {
@@ -15,6 +17,7 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
   const { data: categories } = useCategories();
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct(initialData?.id || '');
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     nama: '',
@@ -26,7 +29,6 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
     sku: '',
     satuan: '',
     category_id: '',
-    is_active: true,
   });
 
   useEffect(() => {
@@ -41,7 +43,6 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
         sku: initialData.sku || '',
         satuan: initialData.satuan || '',
         category_id: initialData.category_id || '',
-        is_active: initialData.is_active ?? true,
       });
     }
   }, [initialData]);
@@ -109,7 +110,18 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Kategori</label>
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">
+              Kategori <span className="text-xs text-gray-400 font-normal">(Opsional)</span>
+            </label>
+            <button
+              type="button"
+              onClick={() => setIsCategoryDialogOpen(true)}
+              className="text-xs text-primary font-medium hover:underline flex items-center gap-1"
+            >
+              <Plus className="w-3 h-3" /> Tambah Baru
+            </button>
+          </div>
           <select
             name="category_id"
             value={formData.category_id}
@@ -140,7 +152,9 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Harga Modal (Rp)</label>
+          <label className="text-sm font-medium">
+            Harga Modal (Rp) <span className="text-xs text-gray-400 font-normal">(Opsional)</span>
+          </label>
           <Input
             name="harga_beli"
             type="number"
@@ -150,9 +164,11 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
           />
         </div>
 
-        {!isEdit && (
+        {!isEdit ? (
           <div className="space-y-2">
-            <label className="text-sm font-medium">Stok Awal</label>
+            <label className="text-sm font-medium">
+              Stok Awal <span className="text-xs text-gray-400 font-normal">(Opsional)</span>
+            </label>
             <Input
               name="stok"
               type="number"
@@ -161,10 +177,22 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
               onChange={handleChange}
             />
           </div>
+        ) : (
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-1">
+              Sisa Stok
+              <span className="text-xs text-gray-400 font-normal">(Tidak bisa diedit langsung)</span>
+            </label>
+            <div className="flex items-center h-10 px-3 bg-gray-50 border rounded-md text-sm font-bold text-gray-700">
+              {formData.stok} {formData.satuan || ''}
+            </div>
+          </div>
         )}
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Stok Minimum</label>
+          <label className="text-sm font-medium">
+            Stok Minimum <span className="text-xs text-gray-400 font-normal">(Opsional)</span>
+          </label>
           <Input
             name="stok_minimum"
             type="number"
@@ -175,7 +203,9 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">SKU</label>
+          <label className="text-sm font-medium">
+            SKU <span className="text-xs text-gray-400 font-normal">(Opsional)</span>
+          </label>
           <Input
             name="sku"
             value={formData.sku}
@@ -185,39 +215,70 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Barcode</label>
+          <label className="text-sm font-medium">
+            Barcode <span className="text-xs text-gray-400 font-normal">(Opsional)</span>
+          </label>
           <Input
             name="barcode"
             value={formData.barcode}
             onChange={handleChange}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent form submit from barcode scanner enter key
+              }
+            }}
             placeholder="Scan barcode di sini"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Satuan</label>
-          <Input
+          <label className="text-sm font-medium">
+            Satuan <span className="text-xs text-gray-400 font-normal">(Opsional)</span>
+          </label>
+          <select
             name="satuan"
             value={formData.satuan}
             onChange={handleChange}
-            placeholder="Contoh: porsi, pcs"
-          />
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <option value="">-- Pilih Satuan --</option>
+            <option value="pcs">Pcs (Pieces)</option>
+            <option value="porsi">Porsi</option>
+            <option value="piring">Piring</option>
+            <option value="gelas">Gelas</option>
+            <option value="botol">Botol</option>
+            <option value="kaleng">Kaleng</option>
+            <option value="bungkus">Bungkus</option>
+            <option value="paket">Paket</option>
+            <option value="box">Box / Dus</option>
+            <option value="kg">Kg (Kilogram)</option>
+            <option value="gram">Gram</option>
+            <option value="liter">Liter</option>
+            <option value="ml">Ml (Milliliter)</option>
+            <option value="meter">Meter</option>
+            {formData.satuan &&
+              ![
+                'pcs',
+                'porsi',
+                'piring',
+                'gelas',
+                'botol',
+                'kaleng',
+                'bungkus',
+                'paket',
+                'box',
+                'kg',
+                'gram',
+                'liter',
+                'ml',
+                'meter',
+              ].includes(formData.satuan.toLowerCase()) && (
+                <option value={formData.satuan}>{formData.satuan}</option>
+              )}
+          </select>
         </div>
 
-        {isEdit && (
-          <div className="space-y-2 flex items-center h-full pt-6">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                name="is_active"
-                checked={formData.is_active}
-                onChange={handleChange}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm font-medium">Produk Aktif</span>
-            </label>
-          </div>
-        )}
+
       </div>
 
       <div className="flex justify-end space-x-4 pt-4 border-t">
@@ -233,6 +294,14 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
           {createMutation.isPending || updateMutation.isPending ? 'Menyimpan...' : 'Simpan Produk'}
         </Button>
       </div>
+
+      <CategoryDialog
+        open={isCategoryDialogOpen}
+        onOpenChange={setIsCategoryDialogOpen}
+        onCategoryCreated={(newCatId) => {
+          setFormData((prev) => ({ ...prev, category_id: newCatId }));
+        }}
+      />
     </form>
   );
 }

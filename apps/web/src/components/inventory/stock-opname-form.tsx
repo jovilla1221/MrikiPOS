@@ -23,7 +23,7 @@ export function StockOpnameForm() {
 
   // limit 100 = batas maksimum PaginationDto backend. Untuk katalog yang lebih
   // besar, gunakan kolom pencarian untuk menemukan produk yang dihitung.
-  const { data, isLoading } = useProducts({ limit: 100, is_active: true });
+  const { data, isLoading } = useProducts({ limit: 100 });
   // Hook mengembalikan array langsung saat online, envelope {data} dari cache offline.
   const products: any[] = Array.isArray(data) ? data : data?.data || [];
 

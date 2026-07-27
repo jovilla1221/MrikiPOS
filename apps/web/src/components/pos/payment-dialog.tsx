@@ -24,7 +24,27 @@ interface PaymentDialogProps {
   isLoading?: boolean;
 }
 
-const UANG_PAS = [50000, 100000, 150000, 200000];
+function getSmartDenominations(total: number): number[] {
+  if (total <= 0) return [50000, 100000];
+
+  const suggestions = new Set<number>();
+  const bases = [1000, 2000, 5000, 10000, 20000, 50000, 100000];
+
+  bases.forEach((base) => {
+    const nextMultiple = Math.ceil(total / base) * base;
+    if (nextMultiple > total && nextMultiple <= total * 3) {
+      suggestions.add(nextMultiple);
+    }
+  });
+
+  if (total > 100000) suggestions.add(Math.ceil(total / 50000) * 50000);
+  if (total > 500000) suggestions.add(Math.ceil(total / 100000) * 100000);
+
+  return Array.from(suggestions)
+    .filter((s) => s > total)
+    .sort((a, b) => a - b)
+    .slice(0, 5);
+}
 
 export function PaymentDialog({
   open,
@@ -158,13 +178,11 @@ export function PaymentDialog({
                     <Button variant="outline" size="sm" onClick={() => setJumlah(grandTotal)}>
                       Uang Pas
                     </Button>
-                    {UANG_PAS.filter((u) => u > grandTotal)
-                      .slice(0, 5)
-                      .map((u) => (
-                        <Button key={u} variant="outline" size="sm" onClick={() => setJumlah(u)}>
-                          {formatCurrency(u).replace('Rp', '').trim()}
-                        </Button>
-                      ))}
+                    {getSmartDenominations(grandTotal).map((u) => (
+                      <Button key={u} variant="outline" size="sm" onClick={() => setJumlah(u)}>
+                        {formatCurrency(u).replace('Rp', '').trim()}
+                      </Button>
+                    ))}
                   </div>
 
                   {kembalian > 0 && (

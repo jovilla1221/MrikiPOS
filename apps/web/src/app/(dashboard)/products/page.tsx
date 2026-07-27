@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useProducts, useDeleteProduct, useCategories } from '@/hooks/use-products';
+import { CategoryDialog } from '@/components/products/category-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
@@ -37,6 +38,8 @@ export default function ProductsPage() {
     }
   };
 
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -44,11 +47,20 @@ export default function ProductsPage() {
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">Katalog Produk</h1>
           <p className="text-gray-500">Kelola daftar produk, harga, dan kategori.</p>
         </div>
-        <Link href="/products/new">
-          <Button className="w-full sm:w-auto flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Tambah Produk
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setIsCategoryDialogOpen(true)}
+            className="w-full sm:w-auto flex items-center gap-2"
+          >
+            Kelola Kategori
           </Button>
-        </Link>
+          <Link href="/products/new">
+            <Button className="w-full sm:w-auto flex items-center gap-2">
+              <Plus className="w-4 h-4" /> Tambah Produk
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
@@ -85,20 +97,19 @@ export default function ProductsPage() {
                 <th className="px-4 py-3">Kategori</th>
                 <th className="px-4 py-3">Harga Jual</th>
                 <th className="px-4 py-3">Stok</th>
-                <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center">
+                  <td colSpan={6} className="px-4 py-8 text-center">
                     Memuat data...
                   </td>
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
                     Tidak ada produk ditemukan
                   </td>
                 </tr>
@@ -118,13 +129,6 @@ export default function ProductsPage() {
                       >
                         {product.stok} {product.satuan || ''}
                       </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {product.is_active ? (
-                        <span className="text-green-600 font-medium text-xs">Aktif</span>
-                      ) : (
-                        <span className="text-gray-400 text-xs">Nonaktif</span>
-                      )}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-2">
@@ -170,6 +174,8 @@ export default function ProductsPage() {
           </div>
         </div>
       </div>
+
+      <CategoryDialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen} />
     </div>
   );
 }

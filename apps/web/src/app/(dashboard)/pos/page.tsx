@@ -30,6 +30,19 @@ export default function POSPage() {
   const createMutation = useCreateTransaction();
   const receiptRef = React.useRef<HTMLDivElement>(null);
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F4') {
+        e.preventDefault();
+        if (items.length > 0 && !isPaymentOpen && !isReceiptOpen) {
+          setIsPaymentOpen(true);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [items, isPaymentOpen, isReceiptOpen]);
+
   const handlePayClick = () => {
     setIsPaymentOpen(true);
   };

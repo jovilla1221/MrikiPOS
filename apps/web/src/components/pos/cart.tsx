@@ -132,31 +132,49 @@ export function Cart({ onPay }: CartProps) {
                     {formatCurrency(item.harga)}
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="flex items-center rounded-md border dark:border-slate-700">
+                <div className="flex flex-col items-end gap-3">
+                  <div className="flex items-center rounded-md border dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
                     <button
                       onClick={() => updateQty(item.product_id, item.qty - 1)}
-                      className="flex h-8 w-8 items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      className="flex h-11 w-11 items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
-                      <Minus className="h-3 w-3" />
+                      <Minus className="h-5 w-5" />
                     </button>
-                    <span className="w-8 text-center text-sm font-medium">{item.qty}</span>
+                    <input
+                      type="number"
+                      className="w-14 text-center text-sm font-medium border-x h-11 outline-none focus:ring-2 focus:ring-primary focus:z-10 bg-transparent"
+                      value={item.qty === 0 ? '' : item.qty}
+                      onChange={(e) => {
+                        const val = e.target.value === '' ? 0 : parseInt(e.target.value);
+                        if (!isNaN(val)) {
+                          updateQty(item.product_id, val);
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                          updateQty(item.product_id, 1);
+                        }
+                      }}
+                    />
                     <button
                       onClick={() => updateQty(item.product_id, item.qty + 1)}
-                      className="flex h-8 w-8 items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      className="flex h-11 w-11 items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
-                      <Plus className="h-3 w-3" />
+                      <Plus className="h-5 w-5" />
                     </button>
                   </div>
-                  <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                    {formatCurrency(item.harga * item.qty)}
+                  <div className="flex w-full items-center justify-between pl-1">
+                    <button
+                      onClick={() => removeItem(item.product_id)}
+                      className="flex h-9 w-9 items-center justify-center rounded-md text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      title="Hapus Item"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                    <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                      {formatCurrency(item.harga * item.qty)}
+                    </div>
                   </div>
-                  <button
-                    onClick={() => removeItem(item.product_id)}
-                    className="text-xs text-red-500 hover:underline"
-                  >
-                    Hapus
-                  </button>
                 </div>
               </div>
             ))}

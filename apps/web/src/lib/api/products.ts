@@ -9,7 +9,6 @@ export interface ProductQueryParams {
   order?: 'asc' | 'desc';
   search?: string;
   category_id?: string;
-  is_active?: boolean;
 }
 
 export const getProducts = async (params?: ProductQueryParams) => {
@@ -36,3 +35,12 @@ export const adjustStock = async (id: string, data: any) =>
 export const getCategories = async () => {
   return apiClient<any[]>('/v1/categories', { method: 'GET' });
 };
+
+export const createCategory = async (data: { nama: string; deskripsi?: string }) =>
+  apiClient<any>('/v1/categories', { method: 'POST', body: JSON.stringify(data) });
+
+export const updateCategory = async (id: string, data: { nama: string; deskripsi?: string }) =>
+  apiClient<any>(`/v1/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deleteCategory = async (id: string) =>
+  apiClient<void>(`/v1/categories/${id}`, { method: 'DELETE' });

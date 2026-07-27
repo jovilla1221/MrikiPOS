@@ -143,14 +143,18 @@ export class AuthService {
       };
     }
 
-    // Generate and send OTP
-    await this.sendOtp({ phone: dto.phone, type: OtpType.REGISTER });
+    // Generate and send OTP (temporarily disabled)
+    // await this.sendOtp({ phone: dto.phone, type: OtpType.REGISTER });
+    const tokens = await this.generateTokens(result.user);
 
     return {
+      user: this.toUserSession(result.user, result.outlet),
+      tokens,
       user_id: result.user.id,
       tenant_id: result.tenant.id,
-      otp_sent: true,
-      message: `Registrasi berhasil. Kode OTP dikirim ke ${dto.phone}`,
+      otp_sent: false,
+      verified: true,
+      message: 'Registrasi berhasil. (OTP Bypassed)',
     };
   }
 
@@ -267,6 +271,7 @@ export class AuthService {
       const tokens = await this.generateTokens(user);
       return {
         link_required: false,
+        pin_required: false,
         user: this.toUserSession(user, user.outlet),
         tokens,
       };

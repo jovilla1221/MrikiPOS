@@ -60,7 +60,6 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^[0-9]{8,13}$/, { message: 'Barcode harus 8-13 digit angka' })
   barcode?: string;
 
   @IsOptional()
@@ -115,7 +114,6 @@ export class UpdateProductDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^[0-9]{8,13}$/, { message: 'Barcode harus 8-13 digit angka' })
   barcode?: string;
 
   @IsOptional()
