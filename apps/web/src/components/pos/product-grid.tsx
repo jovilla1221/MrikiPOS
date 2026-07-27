@@ -87,59 +87,57 @@ export function ProductGrid() {
             <div className="text-slate-500">Produk tidak ditemukan</div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {products.map((product: any) => (
-              <Card
-                key={product.id}
-                className="cursor-pointer overflow-hidden transition-all hover:border-primary hover:shadow-md"
-                onClick={() => {
-                  if (product.stok > 0) {
-                    addItem({
-                      id: product.id,
-                      nama: product.nama,
-                      harga_jual: Number(product.harga_jual),
-                      stok: product.stok,
-                    });
-                  }
-                }}
-              >
-                <div className="aspect-square bg-slate-100 dark:bg-slate-800 relative">
-                  {/* Dummy placeholder foto jika tidak ada */}
-                  {product.foto_url ? (
-                    <img
-                      src={product.foto_url}
-                      alt={product.nama}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-4xl font-bold text-slate-300">
-                      {product.nama.charAt(0)}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {products.map((product: any) => {
+              const isOutOfStock = product.stok <= 0;
+              return (
+                <Card
+                  key={product.id}
+                  className={`relative cursor-pointer transition-all hover:border-emerald-600 hover:shadow-md active:scale-95 ${
+                    isOutOfStock ? 'opacity-50 cursor-not-allowed bg-slate-50 dark:bg-slate-900' : ''
+                  }`}
+                  onClick={() => {
+                    if (!isOutOfStock) {
+                      addItem({
+                        id: product.id,
+                        nama: product.nama,
+                        harga_jual: Number(product.harga_jual),
+                        stok: product.stok,
+                      });
+                    }
+                  }}
+                >
+                  <CardContent className="flex h-full flex-col justify-between p-3.5">
+                    <div>
+                      <div
+                        className="font-bold text-slate-900 line-clamp-2 dark:text-white"
+                        title={product.nama}
+                      >
+                        {product.nama}
+                      </div>
+                      {product.satuan && (
+                        <span className="text-[11px] text-slate-400">/{product.satuan}</span>
+                      )}
                     </div>
-                  )}
-                  {product.stok <= 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                      <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
-                        Habis
+
+                    <div className="mt-3 flex items-end justify-between">
+                      <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                        {formatCurrency(Number(product.harga_jual))}
                       </span>
+                      {isOutOfStock ? (
+                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-bold text-red-600 dark:bg-red-950 dark:text-red-400">
+                          Habis
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-medium text-slate-500">
+                          Stok: {product.stok}
+                        </span>
+                      )}
                     </div>
-                  )}
-                </div>
-                <CardContent className="p-3">
-                  <div
-                    className="mb-1 truncate font-medium text-slate-900 dark:text-white"
-                    title={product.nama}
-                  >
-                    {product.nama}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-primary">
-                      {formatCurrency(Number(product.harga_jual))}
-                    </span>
-                    <span className="text-xs text-slate-500">Stok: {product.stok}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>

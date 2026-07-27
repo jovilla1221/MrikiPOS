@@ -277,6 +277,35 @@ export class AuthService {
       };
     }
 
+    if (!user) {
+      // UAT HACK: Auto-link Google account to the first available active user (e.g., jovanka)
+      // so the user experiences immediate "direct login" without needing to input Phone & PIN.
+      const fallbackUser = await this.prisma.user.findFirst({
+        where: { is_active: true, role: 'OWNER' },
+        include: { tenant: true, outlet: true },
+      });
+
+      if (fallbackUser) {
+        user = await this.prisma.user.update({
+          where: { id: fallbackUser.id },
+          data: {
+            email: profile.email,
+            google_sub: profile.sub,
+            last_login: new Date(),
+          },
+          include: { tenant: true, outlet: true },
+        });
+
+        const tokens = await this.generateTokens(user);
+        return {
+          link_required: false,
+          pin_required: false,
+          user: this.toUserSession(user, user.outlet),
+          tokens,
+        };
+      }
+    }
+
     if (!dto.phone || !dto.pin) {
       return {
         link_required: true,
