@@ -27,7 +27,7 @@ export class ProductService implements OnModuleInit {
   }
 
   async findAll(tenantId: string, outletId: string, query: ProductQueryDto) {
-    const { page = 1, limit = 20, category_id, is_active, low_stock, search } = query;
+    const { page = 1, limit = 20, category_id, is_active, low_stock, search, sort = 'created_at', order = 'desc' } = query;
     const skip = (page - 1) * limit;
 
     const whereClause: any = {
@@ -45,18 +45,18 @@ export class ProductService implements OnModuleInit {
       ];
     }
 
-    // Low stock filter logic is handled by joining with stock_minimum logic in Prisma or finding all and filtering.
-    // However, Prisma doesn't support where: { stok: { lt: prisma.product.stok_minimum } } directly in where objects yet.
-    // We can do it by raw query or just fetch all active and filter, or fetch those where stok is less than stok_minimum.
-    // Wait, prisma 6 supports column comparisons in raw queries or we can just filter it.
-    // Let's keep it simple: Prisma 6 still doesn't natively do field1 < field2 without raw query or `where` raw.
-    // If low_stock is true, we should get low stock. In inventory.service, I can fetch all active products and filter.
-    // For now, let's just handle it.
+    // Build orderBy
+    const orderByClause: any = {};
+    if (sort) {
+      orderByClause[sort] = order;
+    } else {
+      orderByClause.created_at = 'desc';
+    }
 
     const [data, total] = await Promise.all([
       this.prisma.product.findMany({
         where: whereClause,
-        orderBy: { created_at: 'desc' },
+        orderBy: orderByClause,
         take: limit,
         skip,
         include: {

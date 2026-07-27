@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 export function ProductGrid() {
   const [search, setSearch] = React.useState('');
   const [activeCategory, setActiveCategory] = React.useState<string | null>(null);
+  const [sortParam, setSortParam] = React.useState<string>('nama_asc');
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -22,10 +23,26 @@ export function ProductGrid() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  let sort = 'nama';
+  let order = 'asc';
+  if (sortParam === 'nama_desc') {
+    sort = 'nama'; order = 'desc';
+  } else if (sortParam === 'harga_asc') {
+    sort = 'harga_jual'; order = 'asc';
+  } else if (sortParam === 'harga_desc') {
+    sort = 'harga_jual'; order = 'desc';
+  } else if (sortParam === 'stok_asc') {
+    sort = 'stok'; order = 'asc';
+  } else if (sortParam === 'stok_desc') {
+    sort = 'stok'; order = 'desc';
+  }
+
   const { data: categoriesData } = useCategories();
   const { data: productsData, isLoading } = useProducts({
     search,
     category_id: activeCategory || undefined,
+    sort,
+    order: order as 'asc' | 'desc',
     limit: 100,
   });
 
@@ -37,16 +54,30 @@ export function ProductGrid() {
   return (
     <div className="flex h-full flex-col">
       {/* Search & Filter */}
-      <div className="mb-4 space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-          <Input
-            ref={searchInputRef}
-            placeholder="Cari produk (F2)..."
-            className="pl-10"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div className="mb-4 space-y-3">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <Input
+              ref={searchInputRef}
+              placeholder="Cari produk (F2)..."
+              className="pl-10 bg-white dark:bg-slate-900"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <select
+            value={sortParam}
+            onChange={(e) => setSortParam(e.target.value)}
+            className="flex h-10 w-[160px] cursor-pointer items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:bg-slate-950 dark:ring-offset-slate-950 dark:placeholder:text-slate-400 dark:focus:ring-emerald-500"
+          >
+            <option value="nama_asc">Abjad (A-Z)</option>
+            <option value="nama_desc">Abjad (Z-A)</option>
+            <option value="harga_asc">Termurah</option>
+            <option value="harga_desc">Termahal</option>
+            <option value="stok_asc">Stok Terdikit</option>
+            <option value="stok_desc">Stok Terbanyak</option>
+          </select>
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
